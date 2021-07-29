@@ -36,6 +36,29 @@ export async function singeUpUser(userData: SingeUpUserData) {
       console.error("error: ", error)
     }
   }
+  return false
+}
+
+/**
+ * Handels the login Process
+ * @param username {string} - Username of the User that should be logged in
+ * @param password {string} - Password of the User
+ * @returns {Promise<boolean>} - returns true if successfull signed in els returns false
+ */
+export async function loginUser(
+  username: string,
+  password: string
+): Promise<boolean> {
+  if (!config.debug) {
+    try {
+      const parseUser = await Parse.User.login(username, password, {
+        usePost: true,
+      })
+    } catch (error) {
+      console.error("error: ", error)
+    }
+  }
+  return false
 }
 
 /**

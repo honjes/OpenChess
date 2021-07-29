@@ -56,7 +56,7 @@
       <it-button @click="changeModals()">Signe up Instead </it-button>
     </template>
     <template #actions>
-      <it-button type="primary" @click="loginUser">Login</it-button>
+      <it-button type="primary" @click="clickLoginUser">Login</it-button>
     </template>
   </it-modal>
 </template>
@@ -65,7 +65,7 @@
 import { isUndefined } from "lodash"
 import { ref } from "vue"
 import config from "../config"
-import { singeUpUser, getCurrentUser } from "../util/parse"
+import { singeUpUser, getCurrentUser, loginUser } from "../util/parse"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
@@ -109,8 +109,9 @@ export default {
         })
       }
     },
-    loginUser() {
+    async clickLoginUser() {
       this.validateAfterInput = true
+      await loginUser(this.username, this.password)
       console.log(`Login User with ${this.username} und ${this.password}`)
     },
     // Validation Functions
