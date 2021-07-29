@@ -1,6 +1,12 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
 
+export interface SingeUpUserData {
+  username: string
+  password: string
+  email: string
+}
+
 /**
  * Initalises the Parse connection and adds default Object
  */
@@ -12,12 +18,10 @@ export function initaliseParse() {
   }
 }
 
-export interface SingeUpUserData {
-  username: string
-  password: string
-  email: string
-}
-
+/**
+ * Handels the singeup Process
+ * @param userData {SingeUpUserData} - Userdata that is used to create an Useraccount
+ */
 export async function singeUpUser(userData: SingeUpUserData) {
   if (!config.debug) {
     console.log("userData: ", userData)
