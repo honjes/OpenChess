@@ -34,7 +34,7 @@ Please [open an issue](https://github.com/honjes/OpenChess/issues/new) for suppo
 
 ## Contributing
 
-Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/honjes/OpenChess/compare/).
+Please contribute using [Github Flow](https://guides.github.com/introduction/flow/). Create a branch, add commits, and [open a pull request](https://github.com/honjes/OpenChess/compare/). For more information check [CONTRIBUTING.md](https://github.com/honjes/OpenChess/blob/main/CONTRIBUTING.md)
 
 ## Software in use
 
