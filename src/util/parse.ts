@@ -6,11 +6,7 @@ import config from "../config"
  */
 export function initaliseParse() {
   if (!config.debug) {
-    Parse.initialize(
-      config.back4app_applicationId,
-      config.back4app_clientKey,
-      config.back4app_masterKey
-    )
+    Parse.initialize(config.back4app_applicationId, config.back4app_clientKey)
     Parse.serverURL = config.back4app_url
   } else {
   }
