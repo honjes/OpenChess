@@ -1,18 +1,23 @@
 <template>
-  <chessboard :fen="defaultFen" @onMove="onChessMove" />
-  <div>
+  <chessboard
+    style="margin-top: 20px"
+    :class="styleClass"
+    :fen="defaultFen"
+    @onMove="onChessMove"
+  />
+  <div style="margin-top: 20px">
     <p>Fen: {{ currentFen }}</p>
   </div>
 </template>
 
 <script type="ts">
 import chessboard from "./Chessboard.vue"
-import 'vue-chessboard/dist/vue-chessboard.css'
 import { isUndefined } from "lodash"
 export default {
   setup(props) {
     return {
-      defaultFen: isUndefined(props.defaultValue) ? "" : props.defaultValue
+      defaultFen: isUndefined(props.defaultValue) ? "" : props.defaultValue,
+      styleClass: props.class
     }
   },
   methods: {
@@ -29,6 +34,12 @@ export default {
   components: {
     chessboard
   },
+  props: {
+    class: {
+      type: String,
+      default: ""
+    }
+  }
 }
 </script>
 

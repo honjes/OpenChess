@@ -13,5 +13,5 @@ export default {
 </script>
 <template>
   Home
-  <Chess />
+  <Chess class="oc-flex-center" />
 </template>

@@ -6,8 +6,8 @@
  * board and pieces displayed!
  */
 .cg-board-wrap {
-  width: 320px;
-  height: 320px;
+  width: 700px; // default Boardwidth
+  height: 700px; // default Boardheigth
   position: relative;
   display: block;
 }
