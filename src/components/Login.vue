@@ -72,7 +72,7 @@ export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const signUpUser = ref(!getCurrentUser())
+    const signUpUser = ref(config.debug ? false : !getCurrentUser())
     const loggingIn = ref(false)
     return {
       signUpUser,
