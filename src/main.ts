@@ -3,7 +3,7 @@ import { createWebHistory, createRouter } from "vue-router"
 import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
-import "./index.css"
+import "./static/scss/index.scss"
 import { initaliseParse } from "./util/parse"
 
 const router = createRouter({
