@@ -1,5 +1,5 @@
 <template>
-  <it-modal v-model="signUpUser" :closable-mask="closableMask">
+  <it-modal v-model="showSignUpModal" :closable-mask="closableMask">
     <template #header>
       <h3>Create User Account</h3>
     </template>
@@ -33,7 +33,7 @@
       <it-button type="primary" @click="registerUser">Create User</it-button>
     </template>
   </it-modal>
-  <it-modal v-model="loggingIn" :closable-mask="closableMask">
+  <it-modal v-model="showLoggingInModal" :closable-mask="closableMask">
     <template #header>
       <h3>Login</h3>
     </template>
@@ -66,38 +66,42 @@
 import { isUndefined } from "lodash"
 import { ref } from "vue"
 import config from "../config"
-import { singeUpUser, getCurrentUser, loginUser } from "../util/parse"
+import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const signUpUser = ref(config.debug ? false : !getCurrentUser())
-    const loggingIn = ref(false)
+    const showSignUpModal = ref(config.debug ? false : !isLoggedIn())
+    const showLoggingInModal = ref(false)
     return {
-      signUpUser,
-      loggingIn,
+      showSignUpModal,
+      showLoggingInModal,
       email: ref(getItem("email")),
       username: ref(getItem("username")),
       password: ref(""),
       error: ref<{ username?: string; password?: string; email?: string }>({}),
+      closableMask: false,
     }
   },
   async data() {
     // check if user is Logged in
-    const isLoggedIn = ref(await getCurrentUser())
+    const logedIn = ref(await isLoggedIn())
 
     return {
-      isLoggedIn,
+      logedIn,
       validateAfterInput: ref(false),
-      closableMask: false,
     }
   },
   methods: {
     changeModals() {
-      this.signUpUser = !this.signUpUser
-      this.loggingIn = !this.loggingIn
+      this.showSignUpModal = !this.showSignUpModal
+      this.showLoggingInModal = !this.showLoggingInModal
+    },
+    vanishModal() {
+      this.showSignUpModal = false
+      this.showLoggingInModal = false
     },
     // Parse Functions
     async registerUser() {
@@ -136,7 +140,7 @@ export default {
     },
     async validateForm(): Promise<boolean> {
       // check if all fields are set
-      let { username, password, email, signUpUser, setError } = this
+      let { username, password, email, showSignUpModal, setError } = this
       // Validates Username
       function usernameCheck(): boolean {
         // Check if Username is set
@@ -148,7 +152,7 @@ export default {
       // Validates Email
       function emailCheck(): boolean {
         // only check Email if user is trying to singeup
-        if (signUpUser) {
+        if (showSignUpModal) {
           // Check if Email is set
           const empty = email === ""
           if (empty) return setError("email", "Email needs to be set")
@@ -198,5 +202,3 @@ export default {
   },
 }
 </script>
-
-<style></style>
