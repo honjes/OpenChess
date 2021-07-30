@@ -1,5 +1,5 @@
 <template>
-  <it-modal v-model="signUpUser" :closable-mask="closableMask">
+  <it-modal v-model="showSignUpModal" :closable-mask="closableMask">
     <template #header>
       <h3>Create User Account</h3>
     </template>
@@ -33,7 +33,7 @@
       <it-button type="primary" @click="registerUser">Create User</it-button>
     </template>
   </it-modal>
-  <it-modal v-model="loggingIn" :closable-mask="closableMask">
+  <it-modal v-model="showLoggingInModal" :closable-mask="closableMask">
     <template #header>
       <h3>Login</h3>
     </template>
@@ -136,7 +136,7 @@ export default {
     },
     async validateForm(): Promise<boolean> {
       // check if all fields are set
-      let { username, password, email, signUpUser, setError } = this
+      let { username, password, email, showSignUpModal, setError } = this
       // Validates Username
       function usernameCheck(): boolean {
         // Check if Username is set
@@ -148,7 +148,7 @@ export default {
       // Validates Email
       function emailCheck(): boolean {
         // only check Email if user is trying to singeup
-        if (signUpUser) {
+        if (showSignUpModal) {
           // Check if Email is set
           const empty = email === ""
           if (empty) return setError("email", "Email needs to be set")
@@ -198,5 +198,3 @@ export default {
   },
 }
 </script>
-
-<style></style>
