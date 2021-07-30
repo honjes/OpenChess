@@ -54,21 +54,32 @@ export async function loginUser(
 ): Promise<boolean> {
   if (!config.debug) {
     try {
-      const parseUser = await Parse.User.login(username, password, {
+      const parseUser = await Parse.User.logIn(username, password, {
         usePost: true,
       })
+      return true
     } catch (error) {
       console.error("error: ", error)
+      return false
     }
   }
-  return false
+}
+
+export async function logoutUser(): Promise<boolean> {
+  try {
+    await Parse.User.logOut()
+    return true
+  } catch (error) {
+    console.error("error: ", error)
+    return false
+  }
 }
 
 /**
  * Checks if Parse is currently logged in and returns false if not
  * @returns {boolean} - Returns if there is a User set as boolean
  */
-export function getCurrentUser(): boolean {
+export function isLoggedIn(): boolean {
   if (!config.debug) {
     const curUser = Parse.User.current()
     console.log("curUser: ", curUser)
