@@ -49,6 +49,7 @@
         v-model="password"
         @input="updatePassword"
         label-top="Password"
+        type="password"
         :message="error.password"
         :status="error.password && error.password !== '' ? 'danger' : ''"
       />
