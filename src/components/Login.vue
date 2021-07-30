@@ -66,38 +66,42 @@
 import { isUndefined } from "lodash"
 import { ref } from "vue"
 import config from "../config"
-import { singeUpUser, getCurrentUser, loginUser } from "../util/parse"
+import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const signUpUser = ref(config.debug ? false : !getCurrentUser())
-    const loggingIn = ref(false)
+    const showSignUpModal = ref(config.debug ? false : !isLoggedIn())
+    const showLoggingInModal = ref(false)
     return {
-      signUpUser,
-      loggingIn,
+      showSignUpModal,
+      showLoggingInModal,
       email: ref(getItem("email")),
       username: ref(getItem("username")),
       password: ref(""),
       error: ref<{ username?: string; password?: string; email?: string }>({}),
+      closableMask: false,
     }
   },
   async data() {
     // check if user is Logged in
-    const isLoggedIn = ref(await getCurrentUser())
+    const logedIn = ref(await isLoggedIn())
 
     return {
-      isLoggedIn,
+      logedIn,
       validateAfterInput: ref(false),
-      closableMask: false,
     }
   },
   methods: {
     changeModals() {
-      this.signUpUser = !this.signUpUser
-      this.loggingIn = !this.loggingIn
+      this.showSignUpModal = !this.showSignUpModal
+      this.showLoggingInModal = !this.showLoggingInModal
+    },
+    vanishModal() {
+      this.showSignUpModal = false
+      this.showLoggingInModal = false
     },
     // Parse Functions
     async registerUser() {
