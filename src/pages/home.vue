@@ -1,6 +1,11 @@
+<template>
+  <Nav />
+  Home
+  <Chess class="oc-flex-center" />
+</template>
 <script lang="ts">
-import { ref } from "vue"
 import Chess from "../components/Chess.vue"
+import Nav from "../components/Nav.vue"
 
 export default {
   data() {
@@ -8,10 +13,7 @@ export default {
   },
   components: {
     Chess,
+    Nav,
   },
 }
 </script>
-<template>
-  Home
-  <Chess class="oc-flex-center" />
-</template>
