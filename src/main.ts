@@ -4,7 +4,7 @@ import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
 import "./static/scss/index.scss"
-import { initaliseParse } from "./util/parse"
+import { initaliseParse, isLoggedIn as parseIsLoggedIn } from "./util/parse"
 import { createStore } from "vuex"
 
 const router = createRouter({
@@ -17,10 +17,11 @@ const router = createRouter({
   ],
 })
 
+initaliseParse()
 const store = createStore({
   state() {
     return {
-      isLoggedIn: false,
+      isLoggedIn: parseIsLoggedIn(),
     }
   },
   mutations: {
@@ -30,5 +31,4 @@ const store = createStore({
   },
 })
 
-initaliseParse()
 createApp(App).use(Equal).use(store).use(router).mount("#app")
