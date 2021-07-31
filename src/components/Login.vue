@@ -116,6 +116,7 @@ export default {
         if (isSigndUp) {
           this.$Message.success({ text: "Successfully Singed Up" })
           this.validateAfterInput = false
+          this.vanishModal()
         } else this.$Message.danger({ text: "Error while Singing Up" })
       }
     },
@@ -126,6 +127,7 @@ export default {
           this.$Message.success({ text: "Successfully Logged In" })
           this.$store.commit("changeLoginState")
           this.validateAfterInput = false
+          this.vanishModal()
         } else this.$Message.danger({ text: "Error while Logging in" })
       }
     },
