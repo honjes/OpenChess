@@ -106,18 +106,28 @@ export default {
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
-      if (await this.validateForm()) {
-        await singeUpUser({
+      if (this.validateForm()) {
+        this.validateAfterInput = false
+        const isSigndUp = await singeUpUser({
           username: this.username,
           email: this.email,
           password: this.password,
         })
+        if (isSigndUp) {
+          this.$Message.success({ text: "Successfully Singed Up" })
+          this.validateAfterInput = false
+        } else this.$Message.danger({ text: "Error while Singing Up" })
       }
     },
     async clickLoginUser() {
       this.validateAfterInput = true
-      await loginUser(this.username, this.password)
-      console.log(`Login User with ${this.username} und ${this.password}`)
+      if (this.validateForm()) {
+        if (await loginUser(this.username, this.password)) {
+          this.$Message.success({ text: "Successfully Logged In" })
+          this.$store.commit("changeLoginState")
+          this.validateAfterInput = false
+        } else this.$Message.danger({ text: "Error while Logging in" })
+      }
     },
     // Validation Functions
     setError(id: string, value: string): false {
@@ -138,7 +148,7 @@ export default {
       if (!isUndefined(this.error?.email)) return true
       return false
     },
-    async validateForm(): Promise<boolean> {
+    validateForm(): boolean {
       // check if all fields are set
       let { username, password, email, showSignUpModal, setError } = this
       // Validates Username

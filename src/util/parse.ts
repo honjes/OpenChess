@@ -25,9 +25,8 @@ export function initaliseParse() {
  * Handels the singeup Process
  * @param userData {SingeUpUserData} - Userdata that is used to create an Useraccount
  */
-export async function singeUpUser(userData: SingeUpUserData) {
+export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
   if (!config.debug) {
-    console.log("userData: ", userData)
     const parseUser = new Parse.User()
     parseUser.set("username", userData.username)
     parseUser.set("email", userData.email)
@@ -35,6 +34,7 @@ export async function singeUpUser(userData: SingeUpUserData) {
 
     try {
       await parseUser.signUp()
+      return true
     } catch (error) {
       console.error("error: ", error)
     }
