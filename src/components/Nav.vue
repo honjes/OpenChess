@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <it-button v-if="store.state.isLoggedIn" @click="logout">Logout</it-button>
+    <it-button v-if="$store.state.isLoggedIn" @click="logout">Logout</it-button>
   </nav>
 </template>
 
