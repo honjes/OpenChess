@@ -6,11 +6,12 @@ import "equal-vue/dist/style.css"
 import "./static/scss/index.scss"
 import {
   getParseObjects,
-  getUserId,
+  getUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
 } from "./util/parse"
 import { createStore } from "vuex"
+import config from "./config"
 
 const router = createRouter({
   history: createWebHistory(),
@@ -24,7 +25,10 @@ const router = createRouter({
 
 export interface StoreInterface {
   isLoggedIn: boolean
-  userId: string
+  user: {
+    id: string
+    username: string
+  }
   parseObjects: {
     Game: any
   }
@@ -35,9 +39,14 @@ const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
     const parseObjects = getParseObjects()
+    const parseUser = getUser()
+
     return {
       isLoggedIn,
-      userId: isLoggedIn ? "UserId" : "",
+      user: {
+        id: parseUser.id,
+        username: parseUser.getUsername(),
+      },
       parseObjects,
     }
   },
@@ -50,11 +59,9 @@ const store = createStore({
       const { isLoggedIn } = state
       state.isLoggedIn = !isLoggedIn
 
-      // If user is now logged in set current userId
-      if (isLoggedIn) {
-        const userId = getUserId()
-        state.userId = userId ? userId : ""
-      } else state.userId = ""
+      // If user is now logged in set current user.id
+      if (isLoggedIn) state.user.id = getUser().id
+      else state.user.id = ""
     },
   },
 })
