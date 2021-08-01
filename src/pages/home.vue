@@ -1,10 +1,9 @@
 <template>
   <Nav />
-  Home
-  <Chess class="oc-flex-center" />
+  <CurrentGames />
 </template>
 <script lang="ts">
-import Chess from "../components/Chess.vue"
+import CurrentGames from "../components/CurrentGames.vue"
 import Nav from "../components/Nav.vue"
 
 export default {
@@ -12,8 +11,8 @@ export default {
     return {}
   },
   components: {
-    Chess,
     Nav,
+    CurrentGames,
   },
 }
 </script>
