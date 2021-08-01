@@ -36,9 +36,19 @@ export function initaliseParse(): boolean {
  * @returns {} - Returns an object with the extended parse Objects
  */
 export function getParseObjects() {
-  const Game = Parse.Object.extend("Game", {})
+  const Game = Parse.Object.extend("Game", {
+    getEnemy: function (userId: string): any {
+      return this.get("users").filter(val => val !== userId)[0]
+    },
+    isUsersTurn: function (userId: string): boolean {
+      console.log(`this.get("turn") === userId: `, this.get("turn") === userId)
+      console.log(`this.get("turn"): `, this.get("turn"))
+      console.log(`userId: `, userId)
+      return this.get("turn") === userId
+    },
+  })
 
-  return { Game }
+  return { Game: new Game() }
 }
 
 /**
