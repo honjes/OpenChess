@@ -31,10 +31,14 @@ export function initaliseParse(): boolean {
   return false
 }
 
-export function getParseGame() {
+/**
+ * Creates all Parse Objects needed
+ * @returns {} - Returns an object with the extended parse Objects
+ */
+export function getParseObjects() {
   const Game = Parse.Object.extend("Game", {})
 
-  return Game
+  return { Game }
 }
 
 /**

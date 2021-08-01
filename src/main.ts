@@ -5,6 +5,7 @@ import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
 import "./static/scss/index.scss"
 import {
+  getParseObjects,
   getUserId,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
@@ -24,15 +25,20 @@ const router = createRouter({
 export interface StoreInterface {
   isLoggedIn: boolean
   userId: string
+  parseObject: {
+    Game: any
+  }
 }
 
 initaliseParse()
 const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
+    const parseObjects = getParseObjects()
     return {
       isLoggedIn,
       userId: isLoggedIn ? "UserId" : "",
+      parseObjects,
     }
   },
   mutations: {
