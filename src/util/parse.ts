@@ -7,18 +7,34 @@ export interface SingeUpUserData {
   email: string
 }
 
+export interface ParseCurrentUserResponse {
+  id: string
+  [index: string]: string | number | undefined
+}
+
 /**
  * Initalises the Parse connection and adds default Object
  */
-export function initaliseParse() {
+export function initaliseParse(): boolean {
   if (!config.debug) {
-    Parse.initialize(
-      config.back4app_applicationId,
-      config.back4app_javascriptKey
-    )
-    Parse.serverURL = config.back4app_url
-  } else {
+    try {
+      Parse.initialize(
+        config.back4app_applicationId,
+        config.back4app_javascriptKey
+      )
+      Parse.serverURL = config.back4app_url
+      return true
+    } catch (error) {
+      console.error(error)
+    }
   }
+  return false
+}
+
+export function getParseGame() {
+  const Game = Parse.Object.extend("Game", {})
+
+  return Game
 }
 
 /**
@@ -82,7 +98,18 @@ export async function logoutUser(): Promise<boolean> {
 export function isLoggedIn(): boolean {
   if (!config.debug) {
     const curUser = Parse.User.current()
-    console.log("curUser: ", curUser)
     return Boolean(curUser)
   } else return false
+}
+
+/**
+ * Check the current loggedin user and returns its Id
+ * @returns {string | false} - Returns the UserId if logged in else false
+ */
+export function getUserId(): string | false {
+  if (!config.debug) {
+    const currentUser: ParseCurrentUserResponse = Parse.User.current()
+    if (currentUser?.id) return currentUser.id
+  }
+  return false
 }
