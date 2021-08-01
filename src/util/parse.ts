@@ -37,14 +37,11 @@ export function initaliseParse(): boolean {
  */
 export function getParseObjects() {
   const Game = Parse.Object.extend("Game", {
-    getEnemy: function (userId: string): any {
-      return this.get("users").filter(val => val !== userId)[0]
+    getEnemy: function (userName: string): any {
+      return this.get("users").filter(val => val !== userName)[0]
     },
-    isUsersTurn: function (userId: string): boolean {
-      console.log(`this.get("turn") === userId: `, this.get("turn") === userId)
-      console.log(`this.get("turn"): `, this.get("turn"))
-      console.log(`userId: `, userId)
-      return this.get("turn") === userId
+    isUsersTurn: function (userName: string): boolean {
+      return this.get("turn") === userName
     },
   })
 
@@ -118,12 +115,42 @@ export function isLoggedIn(): boolean {
 
 /**
  * Check the current loggedin user and returns its Id
- * @returns {string | false} - Returns the UserId if logged in else false
+ * @returns {string} - Returns the UserId if logged in else returns empty string
  */
-export function getUserId(): string | false {
+export function getUser(): any {
   if (!config.debug) {
     const currentUser: ParseCurrentUserResponse = Parse.User.current()
-    if (currentUser?.id) return currentUser.id
+    if (currentUser?.id) return currentUser
+  }
+  return false
+}
+
+/**
+ * Makes an equalTo query to Parse
+ * @param object {any} - ParseObject that should be searched
+ * @param column {string} - name of the column that should be searched
+ * @param value {value} - The value the column should equal to
+ * @returns {any | false} - Returns the the queryresult or false if there was an error
+ */
+export async function parseQuery(
+  object: any,
+  queryParams?: { [index: string]: string | number }
+): Promise<any | false> {
+  if (!config.debug) {
+    try {
+      const query = new Parse.Query(object)
+
+      // Adding queryParameters
+      Object.keys(queryParams).map(key => {
+        query.equalTo(key, queryParams[key])
+      })
+      const result = await query.find()
+
+      return result
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
   }
   return false
 }
