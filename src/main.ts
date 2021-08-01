@@ -42,6 +42,10 @@ const store = createStore({
     }
   },
   mutations: {
+    /**
+     * Changes the LoginState to the oppisite of before
+     * and sets the current userId if user is Logged in
+     */
     changeLoginState(state: StoreInterface) {
       const { isLoggedIn } = state
       state.isLoggedIn = !isLoggedIn
