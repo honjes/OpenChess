@@ -25,7 +25,7 @@ const router = createRouter({
 export interface StoreInterface {
   isLoggedIn: boolean
   userId: string
-  parseObject: {
+  parseObjects: {
     Game: any
   }
 }
