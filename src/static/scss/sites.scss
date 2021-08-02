@@ -1,0 +1,16 @@
+#app {
+  #login-site {
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    @media screen and (max-width: 576px) {
+      &.container {
+        padding: 0;
+        > div {
+          padding: 0 10px;
+        }
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { createWebHistory, createRouter } from "vue-router"
 import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
+import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
 import {
   getParseObjects,
@@ -11,14 +12,19 @@ import {
   isLoggedIn as parseIsLoggedIn,
 } from "./util/parse"
 import { createStore } from "vuex"
-import config from "./config"
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: "/",
+      name: "home",
       component: defineAsyncComponent(() => import("./pages/home.vue")),
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
   ],
 })
@@ -44,8 +50,8 @@ const store = createStore({
     return {
       isLoggedIn,
       user: {
-        id: parseUser.id,
-        username: parseUser.getUsername(),
+        id: isLoggedIn ? parseUser.id : "",
+        username: isLoggedIn ? parseUser.getUsername() : "",
       },
       parseObjects,
     }
