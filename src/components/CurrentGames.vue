@@ -1,12 +1,12 @@
 <template>
   <div class="oc-current_games">
-    {{ currentGames }}
+    debug: {{ currentGames }}
     <div v-if="currentGames.length > 0">
       <div
         v-for="game in currentGames"
         :key="game.objectId"
         class="oc-clickable oc-hover"
-        @click="() => toGamePage(game.objectId)"
+        @click="toGamePage(game.id)"
       >
         <span class="oc-disabled">vs </span>
         {{ game.getEnemy(this.$store.state.user.id) }}
@@ -37,7 +37,9 @@ export default {
     })
   },
   methods: {
-    toGamePage(gameId: string) {},
+    toGamePage(gameId: any) {
+      this.$router.push({ name: "game", params: { gameId } })
+    },
   },
 }
 </script>

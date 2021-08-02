@@ -26,6 +26,11 @@ const router = createRouter({
       name: "login",
       component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
+    {
+      path: "/game/:gameId",
+      name: "game",
+      component: defineAsyncComponent(() => import("./pages/game.vue")),
+    },
   ],
 })
 
