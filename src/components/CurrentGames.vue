@@ -1,27 +1,22 @@
 <template>
-  <div>
+  <div class="oc-current_games">
     {{ currentGames }}
     <div v-if="currentGames.length > 0">
-      <table style="width: 100%">
-        <tbody>
-          <tr
-            v-for="game in currentGames"
-            :key="game.objectId"
-            class="oc-clickable"
-            @click="() => toGamePage(game.objectId)"
-          >
-            <td>
-              {{ game.getEnemy(this.$store.state.user.id) }}
-              <it-tag
-                type="warning"
-                v-if="game.isUsersTurn(this.$store.state.user.username)"
-              >
-                Your Turn
-              </it-tag>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div
+        v-for="game in currentGames"
+        :key="game.objectId"
+        class="oc-clickable oc-hover"
+        @click="() => toGamePage(game.objectId)"
+      >
+        <span class="oc-disabled">vs </span>
+        {{ game.getEnemy(this.$store.state.user.id) }}
+        <it-tag
+          type="warning"
+          v-if="game.isUsersTurn(this.$store.state.user.username)"
+        >
+          Your Turn
+        </it-tag>
+      </div>
     </div>
     <div v-else>No games Found</div>
   </div>

@@ -1,6 +1,11 @@
 <template>
-  <Nav />
-  <CurrentGames />
+  <div id="home_site">
+    <Nav />
+    <div class="home_content">
+      <div class="left"></div>
+      <div class="games"><CurrentGames /></div>
+    </div>
+  </div>
 </template>
 <script lang="ts">
 import CurrentGames from "../components/CurrentGames.vue"
