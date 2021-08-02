@@ -1,65 +1,63 @@
 <template>
-  <it-modal v-model="showSignUpModal" :closable-mask="closableMask">
-    <template #header>
+  <div id="login-site" class="container">
+    <div v-if="showSignUpForm">
       <h3>Create User Account</h3>
-    </template>
-    <template #body>
-      <it-input
-        v-model="username"
-        @input="updateUsername"
-        label-top="Username"
-        :message="error.username"
-        :status="error.username && error.username !== '' ? 'danger' : ''"
-      />
-      <it-input
-        v-model="email"
-        @input="updateEmail"
-        label-top="Email"
-        :message="error.email"
-        :status="error.email && error.email !== '' ? 'danger' : ''"
-      />
-      <it-input
-        v-model="password"
-        @input="updatePassword"
-        type="password"
-        label-top="Password"
-        :message="error.password"
-        :status="error.password && error.password !== '' ? 'danger' : ''"
-      />
-      <it-divider />
-      <it-button @click="changeModals()"> Login Instead </it-button>
-    </template>
-    <template #actions>
-      <it-button type="primary" @click="registerUser">Create User</it-button>
-    </template>
-  </it-modal>
-  <it-modal v-model="showLoggingInModal" :closable-mask="closableMask">
-    <template #header>
+      <div class="form">
+        <it-input
+          v-model="username"
+          @input="updateUsername"
+          label-top="Username"
+          :message="error.username"
+          :status="error.username && error.username !== '' ? 'danger' : ''"
+        />
+        <it-input
+          v-model="email"
+          @input="updateEmail"
+          label-top="Email"
+          :message="error.email"
+          :status="error.email && error.email !== '' ? 'danger' : ''"
+        />
+        <it-input
+          v-model="password"
+          @input="updatePassword"
+          type="password"
+          label-top="Password"
+          :message="error.password"
+          :status="error.password && error.password !== '' ? 'danger' : ''"
+        />
+        <it-divider />
+      </div>
+      <div class="buttons">
+        <it-button @click="changeForm()"> Login Instead </it-button>
+        <it-button type="primary" @click="registerUser">Create User</it-button>
+      </div>
+    </div>
+    <div v-else>
       <h3>Login</h3>
-    </template>
-    <template #body>
-      <it-input
-        v-model="username"
-        @input="updateUsername"
-        label-top="Username"
-        :message="error.username"
-        :status="error.username && error.username !== '' ? 'danger' : ''"
-      />
-      <it-input
-        v-model="password"
-        @input="updatePassword"
-        label-top="Password"
-        type="password"
-        :message="error.password"
-        :status="error.password && error.password !== '' ? 'danger' : ''"
-      />
-      <it-divider />
-      <it-button @click="changeModals()">Signe up Instead </it-button>
-    </template>
-    <template #actions>
-      <it-button type="primary" @click="clickLoginUser">Login</it-button>
-    </template>
-  </it-modal>
+      <div class="form">
+        <it-input
+          v-model="username"
+          @input="updateUsername"
+          label-top="Username"
+          :message="error.username"
+          :status="error.username && error.username !== '' ? 'danger' : ''"
+        />
+        <it-input
+          v-model="password"
+          @input="updatePassword"
+          label-top="Password"
+          type="password"
+          :message="error.password"
+          :status="error.password && error.password !== '' ? 'danger' : ''"
+        />
+        <it-divider />
+      </div>
+      <div class="buttons">
+        <it-button @click="changeForm()">Signe up Instead </it-button>
+        <it-button type="primary" @click="clickLoginUser">Login</it-button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -73,35 +71,28 @@ export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const showSignUpModal = ref(config.debug ? false : !isLoggedIn())
-    const showLoggingInModal = ref(false)
+    const showSignUpForm = ref(config.debug ? false : !isLoggedIn())
+    const showLoggingInForm = ref(false)
     return {
-      showSignUpModal,
-      showLoggingInModal,
+      showSignUpForm,
+      showLoggingInForm,
       email: ref(getItem("email")),
       username: ref(getItem("username")),
       password: ref(""),
       error: ref<{ username?: string; password?: string; email?: string }>({}),
-      closableMask: false,
-    }
-  },
-  async data() {
-    // check if user is Logged in
-    const logedIn = ref(await isLoggedIn())
-
-    return {
-      logedIn,
       validateAfterInput: ref(false),
     }
   },
+  mounted() {
+    if (isLoggedIn()) this.$router.push({ name: "home" })
+  },
   methods: {
-    changeModals() {
-      this.showSignUpModal = !this.showSignUpModal
-      this.showLoggingInModal = !this.showLoggingInModal
+    changeForm() {
+      this.showSignUpForm = !this.showSignUpForm
+      this.showLoggingInForm = !this.showLoggingInForm
     },
-    vanishModal() {
-      this.showSignUpModal = false
-      this.showLoggingInModal = false
+    redirectTo(page = "home") {
+      this.$router.push({ name: page })
     },
     // Parse Functions
     async registerUser() {
@@ -116,7 +107,7 @@ export default {
         if (isSigndUp) {
           this.$Message.success({ text: "Successfully Singed Up" })
           this.validateAfterInput = false
-          this.vanishModal()
+          this.redirectTo()
         } else this.$Message.danger({ text: "Error while Singing Up" })
       }
     },
@@ -127,7 +118,7 @@ export default {
           this.$Message.success({ text: "Successfully Logged In" })
           this.$store.commit("changeLoginState")
           this.validateAfterInput = false
-          this.vanishModal()
+          this.redirectTo()
         } else this.$Message.danger({ text: "Error while Logging in" })
       }
     },
@@ -152,7 +143,7 @@ export default {
     },
     validateForm(): boolean {
       // check if all fields are set
-      let { username, password, email, showSignUpModal, setError } = this
+      let { username, password, email, showSignUpForm, setError } = this
       // Validates Username
       function usernameCheck(): boolean {
         // Check if Username is set
@@ -164,7 +155,7 @@ export default {
       // Validates Email
       function emailCheck(): boolean {
         // only check Email if user is trying to singeup
-        if (showSignUpModal) {
+        if (showSignUpForm) {
           // Check if Email is set
           const empty = email === ""
           if (empty) return setError("email", "Email needs to be set")

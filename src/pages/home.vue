@@ -5,10 +5,11 @@
 <script lang="ts">
 import CurrentGames from "../components/CurrentGames.vue"
 import Nav from "../components/Nav.vue"
+import { isLoggedIn } from "../util/parse"
 
 export default {
-  data() {
-    return {}
+  mounted() {
+    if (!isLoggedIn()) this.$router.push({ name: "login" })
   },
   components: {
     Nav,
