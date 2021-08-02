@@ -19,12 +19,12 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: defineAsyncComponent(() => import("./pages/Home.vue")),
+      component: defineAsyncComponent(() => import("./pages/home.vue")),
     },
     {
       path: "/login",
       name: "login",
-      component: defineAsyncComponent(() => import("./pages/Login.vue")),
+      component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
   ],
 })
