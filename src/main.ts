@@ -50,8 +50,8 @@ const store = createStore({
     return {
       isLoggedIn,
       user: {
-        id: parseUser.id,
-        username: parseUser.getUsername(),
+        id: isLoggedIn ? parseUser.id : "",
+        username: isLoggedIn ? parseUser.getUsername() : "",
       },
       parseObjects,
     }
