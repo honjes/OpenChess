@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="oc-container">
     <router-view />
   </div>
 </template>
