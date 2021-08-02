@@ -12,6 +12,7 @@ export default {
       if (await logoutUser()) {
         this.$Message.success({ text: "Sucessfully Loged out" })
         this.$store.commit("changeLoginState")
+        this.$router.push({ name: "login" })
       } else this.$Message.danger({ text: "Logout failed" })
     },
     isLoggedIn,
