@@ -9,6 +9,7 @@ export interface SingeUpUserData {
 
 export interface ParseCurrentUserResponse {
   id: string
+  username: string
   [index: string]: string | number | undefined
 }
 
@@ -23,6 +24,8 @@ export function initaliseParse(): boolean {
         config.back4app_javascriptKey
       )
       Parse.serverURL = config.back4app_url
+      Parse.secret = config.parse_secret
+      Parse.enableEncryptedUser()
       return true
     } catch (error) {
       console.error(error)
@@ -136,7 +139,7 @@ export async function parseQuery(
   object: any,
   queryParams?: { [index: string]: string | number }
 ): Promise<any | false> {
-  if (!config.debug) {
+  if (!config.debug && isLoggedIn()) {
     try {
       const query = new Parse.Query(object)
 
