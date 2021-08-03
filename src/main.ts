@@ -12,6 +12,7 @@ import {
   isLoggedIn as parseIsLoggedIn,
 } from "./util/parse"
 import { createStore } from "vuex"
+import config from "./config"
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,6 +45,9 @@ export interface StoreInterface {
     Game: any
   }
   windowWith: number
+  config: {
+    debug: boolean
+  }
 }
 
 initaliseParse()
@@ -61,6 +65,9 @@ const store = createStore({
       },
       parseObjects,
       windowWith: window.innerWidth,
+      config: {
+        debug: config.debug,
+      },
     }
   },
   mutations: {
