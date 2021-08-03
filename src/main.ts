@@ -40,6 +40,7 @@ export interface StoreInterface {
   user: {
     id: string
     username: string
+    color: string
   }
   parseObjects: {
     Game: any
@@ -60,8 +61,9 @@ const store = createStore({
     return {
       isLoggedIn,
       user: {
-        id: isLoggedIn ? parseUser.id : "",
-        username: isLoggedIn ? parseUser.getUsername() : "",
+        id: parseUser.id,
+        username: parseUser.getUsername(),
+        color: parseUser.get("color"),
       },
       parseObjects,
       windowWith: window.innerWidth,

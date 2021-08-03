@@ -8,12 +8,14 @@
         class="single_game oc-clickable oc-hover"
         @click="toGamePage(game.id)"
       >
-        <span class="oc-disabled">vs </span>
-        {{ game.getEnemy(this.$store.state.user.id) }}
-        <it-tag
-          type="warning"
-          v-if="game.isUsersTurn(this.$store.state.user.username)"
-        >
+        <span class="oc-disabled" style="margin-right: 10px">vs</span>
+        <Avatar
+          size="30px"
+          :text="game.getEnemy(storeUser.id)"
+          :color="storeUser.color"
+          :extended="true"
+        />
+        <it-tag type="warning" v-if="game.isUsersTurn(storeUser.username)">
           Your Turn
         </it-tag>
       </div>
@@ -25,6 +27,8 @@
 <script lang="ts">
 import { ref } from "vue"
 import { parseQuery } from "../util/parse"
+import Avatar from "./Avatar.vue"
+
 export default {
   setup() {
     return {
@@ -35,16 +39,22 @@ export default {
     debug() {
       return this.$store.state.config.debug
     },
+    storeUser() {
+      return this.$store.state.user
+    },
   },
   async mounted() {
     this.currentGames = await parseQuery(this.$store.state.parseObjects.Game, {
-      users: this.$store.state.user.username,
+      users: this.storeUser.username,
     })
   },
   methods: {
     toGamePage(gameId: any) {
       this.$router.push({ name: "game", params: { gameId } })
     },
+  },
+  components: {
+    Avatar,
   },
 }
 </script>
@@ -55,6 +65,9 @@ export default {
   padding: 0 0;
   font-size: 1.1em;
   .single_game {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 7px 0;
   }
 }
