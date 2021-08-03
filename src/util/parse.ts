@@ -7,18 +7,45 @@ export interface SingeUpUserData {
   email: string
 }
 
+export interface ParseCurrentUserResponse {
+  id: string
+  [index: string]: string | number | undefined
+}
+
 /**
  * Initalises the Parse connection and adds default Object
  */
-export function initaliseParse() {
+export function initaliseParse(): boolean {
   if (!config.debug) {
-    Parse.initialize(
-      config.back4app_applicationId,
-      config.back4app_javascriptKey
-    )
-    Parse.serverURL = config.back4app_url
-  } else {
+    try {
+      Parse.initialize(
+        config.back4app_applicationId,
+        config.back4app_javascriptKey
+      )
+      Parse.serverURL = config.back4app_url
+      return true
+    } catch (error) {
+      console.error(error)
+    }
   }
+  return false
+}
+
+/**
+ * Creates all Parse Objects needed
+ * @returns {} - Returns an object with the extended parse Objects
+ */
+export function getParseObjects() {
+  const Game = Parse.Object.extend("Game", {
+    getEnemy: function (userName: string): any {
+      return this.get("users").filter(val => val !== userName)[0]
+    },
+    isUsersTurn: function (userName: string): boolean {
+      return this.get("turn") === userName
+    },
+  })
+
+  return { Game: new Game() }
 }
 
 /**
@@ -82,7 +109,48 @@ export async function logoutUser(): Promise<boolean> {
 export function isLoggedIn(): boolean {
   if (!config.debug) {
     const curUser = Parse.User.current()
-    console.log("curUser: ", curUser)
     return Boolean(curUser)
   } else return false
+}
+
+/**
+ * Check the current loggedin user and returns its Id
+ * @returns {string} - Returns the UserId if logged in else returns empty string
+ */
+export function getUser(): any {
+  if (!config.debug) {
+    const currentUser: ParseCurrentUserResponse = Parse.User.current()
+    if (currentUser?.id) return currentUser
+  }
+  return false
+}
+
+/**
+ * Makes an equalTo query to Parse
+ * @param object {any} - ParseObject that should be searched
+ * @param column {string} - name of the column that should be searched
+ * @param value {value} - The value the column should equal to
+ * @returns {any | false} - Returns the the queryresult or false if there was an error
+ */
+export async function parseQuery(
+  object: any,
+  queryParams?: { [index: string]: string | number }
+): Promise<any | false> {
+  if (!config.debug) {
+    try {
+      const query = new Parse.Query(object)
+
+      // Adding queryParameters
+      Object.keys(queryParams).map(key => {
+        query.equalTo(key, queryParams[key])
+      })
+      const result = await query.find()
+
+      return result
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
+  }
+  return false
 }

@@ -1,18 +1,13 @@
 <template>
-  <div>
-    <Login />
+  <div class="oc-container">
     <router-view />
   </div>
 </template>
 
 <script lang="ts">
-import Login from "./components/Login.vue"
 import { defineComponent } from "vue"
 
 export default defineComponent({
   name: "app",
-  components: {
-    Login,
-  },
 })
 </script>

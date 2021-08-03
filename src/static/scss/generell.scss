@@ -1,6 +1,46 @@
-#app {
-  .oc-flex-center {
-    display: flex;
-    justify-content: center;
+body {
+  padding: 0;
+  margin: 0;
+  background-color: #262626;
+  color: $default-text-color;
+
+  #app {
+    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    margin-top: 60px;
+
+    /* Utility classes */
+    .oc-container {
+      width: auto;
+      padding-right: var(--bs-gutter-x, 0.75rem);
+      padding-left: var(--bs-gutter-x, 0.75rem);
+      margin-right: auto;
+      margin-left: auto;
+    }
+    .oc-flex-center {
+      display: flex;
+      justify-content: center;
+    }
+    .oc-clickable:hover {
+      cursor: pointer;
+    }
+    .oc-hover {
+      transition: 0.5s;
+      color: #666;
+      background: #333;
+      border: 1px solid transparent;
+
+      &:hover {
+        color: #ffee10;
+        transform: scale(1.03);
+        box-shadow: 0 0 15px #ffee10;
+        border: 1px solid #ffee10;
+      }
+    }
+    .oc-disabled {
+      color: $default-text-color !important;
+    }
   }
 }

@@ -1,0 +1,27 @@
+#app {
+  #login_site {
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+    @media screen and (max-width: 576px) {
+      &.container {
+        padding: 0;
+        > div {
+          padding: 0 10px;
+        }
+      }
+    }
+  }
+  #home_site {
+    .home_content {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      grid-template-rows: 100%;
+      grid-template-areas: "left right";
+      > div {
+        padding: 0 10px;
+      }
+    }
+  }
+}

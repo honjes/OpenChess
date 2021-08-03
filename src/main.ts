@@ -3,8 +3,14 @@ import { createWebHistory, createRouter } from "vue-router"
 import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
+import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
-import { initaliseParse, isLoggedIn as parseIsLoggedIn } from "./util/parse"
+import {
+  getParseObjects,
+  getUser,
+  initaliseParse,
+  isLoggedIn as parseIsLoggedIn,
+} from "./util/parse"
 import { createStore } from "vuex"
 
 const router = createRouter({
@@ -12,21 +18,56 @@ const router = createRouter({
   routes: [
     {
       path: "/",
+      name: "home",
       component: defineAsyncComponent(() => import("./pages/home.vue")),
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
   ],
 })
 
+export interface StoreInterface {
+  isLoggedIn: boolean
+  user: {
+    id: string
+    username: string
+  }
+  parseObjects: {
+    Game: any
+  }
+}
+
 initaliseParse()
 const store = createStore({
-  state() {
+  state(): StoreInterface {
+    const isLoggedIn = parseIsLoggedIn()
+    const parseObjects = getParseObjects()
+    const parseUser = getUser()
+
     return {
-      isLoggedIn: parseIsLoggedIn(),
+      isLoggedIn,
+      user: {
+        id: isLoggedIn ? parseUser.id : "",
+        username: isLoggedIn ? parseUser.getUsername() : "",
+      },
+      parseObjects,
     }
   },
   mutations: {
-    changeLoginState(state) {
-      state.isLoggedIn = !state.isLoggedIn
+    /**
+     * Changes the LoginState to the oppisite of before
+     * and sets the current userId if user is Logged in
+     */
+    changeLoginState(state: StoreInterface) {
+      const { isLoggedIn } = state
+      state.isLoggedIn = !isLoggedIn
+
+      // If user is now logged in set current user.id
+      if (isLoggedIn) state.user.id = getUser().id
+      else state.user.id = ""
     },
   },
 })
