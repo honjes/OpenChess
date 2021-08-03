@@ -7,7 +7,7 @@ import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
 import {
   getParseObjects,
-  getUser,
+  getCurrentUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
 } from "./util/parse"
@@ -56,15 +56,18 @@ const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
     const parseObjects = getParseObjects()
-    const parseUser = getUser()
+    const currentUser = getCurrentUser()
+    const parseUser = currentUser
+      ? {
+          id: currentUser.id,
+          username: currentUser.getUsername(),
+          color: currentUser.get("color"),
+        }
+      : { id: "", username: "", color: "" }
 
     return {
       isLoggedIn,
-      user: {
-        id: parseUser.id,
-        username: parseUser.getUsername(),
-        color: parseUser.get("color"),
-      },
+      user: parseUser,
       parseObjects,
       windowWith: window.innerWidth,
       config: {
@@ -79,10 +82,11 @@ const store = createStore({
      */
     changeLoginState(state: StoreInterface) {
       const { isLoggedIn } = state
+      const currentUser = getCurrentUser()
       state.isLoggedIn = !isLoggedIn
 
       // If user is now logged in set current user.id
-      if (isLoggedIn) state.user.id = getUser().id
+      if (currentUser !== false) state.user.id = currentUser.id
       else state.user.id = ""
     },
     refreshWindowSize(state) {

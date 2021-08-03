@@ -4,9 +4,7 @@
     @mouseover="changeExtend"
     @mouseout="changeExtend"
   >
-    <span class="username" ref="extendedText" :style="{ width: textWidth }">{{
-      text
-    }}</span>
+    <span class="username" ref="extendedText" :style="{ width: textWidth }">{{ text }}</span>
     <it-avatar
       :src="src"
       :text="text"
@@ -20,6 +18,7 @@
 
 <script>
 import { ref } from "vue"
+import { isUndefined } from "lodash"
 
 export default {
   name: "Avatar",
@@ -36,10 +35,8 @@ export default {
       ...props,
       extend: ref(false),
       extendTextWidth: ref(0),
+      firstExtend: true,
     }
-  },
-  mounted() {
-    this.extendTextWidth = this.$refs.extendedText.clientWidth
   },
   data() {},
   computed: {
@@ -55,8 +52,15 @@ export default {
   },
   methods: {
     changeExtend() {
-      console.log("this.avatarTransform: ", this.avatarTransform)
+      if (this.firstExtend) {
+        this.updateTextWidth()
+        this.firstExtend = false
+      }
       this.extend = !this.extend
+    },
+    updateTextWidth() {
+      if (!isUndefined(this.$refs.extendedText))
+        this.extendTextWidth = this.$refs.extendedText.clientWidth
     },
   },
 }
@@ -71,7 +75,7 @@ export default {
     position: absolute;
     height: 25px;
     background: #fff;
-    color: #000;
+    color: transparent;
     opacity: 0;
     border-radius: 120px 160px 160px 120px;
     transition: ease all 1s;
@@ -84,6 +88,7 @@ export default {
     animation: roll-right 1s;
     .username {
       opacity: 1;
+      color: #000;
     }
   }
 }
