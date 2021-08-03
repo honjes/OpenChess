@@ -1,5 +1,5 @@
 html {
-  overflow: hidden;
+  //overflow: hidden;
 }
 
 @import "./vars.scss";
@@ -9,4 +9,3 @@ html {
 // site Styles
 @import "./generell.scss";
 @import "./sites.scss";
-@import "./components.scss";

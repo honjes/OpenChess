@@ -43,3 +43,11 @@ export default {
   },
 }
 </script>
+
+<style lang="scss">
+.oc-current_games {
+  border: 1px solid #000;
+  padding: 7px 0;
+  font-size: 1.1em;
+}
+</style>
