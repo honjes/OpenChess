@@ -41,4 +41,9 @@ export default {
 }
 </script>
 
-<style></style>
+<style lang="scss">
+.chessGame {
+  display: flex;
+  justify-content: center;
+}
+</style>
