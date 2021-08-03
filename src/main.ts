@@ -12,6 +12,7 @@ import {
   isLoggedIn as parseIsLoggedIn,
 } from "./util/parse"
 import { createStore } from "vuex"
+import config from "./config"
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
       name: "login",
       component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
+    {
+      path: "/game/:gameId",
+      name: "game",
+      component: defineAsyncComponent(() => import("./pages/game.vue")),
+    },
   ],
 })
 
@@ -37,6 +43,10 @@ export interface StoreInterface {
   }
   parseObjects: {
     Game: any
+  }
+  windowWith: number
+  config: {
+    debug: boolean
   }
 }
 
@@ -54,6 +64,10 @@ const store = createStore({
         username: isLoggedIn ? parseUser.getUsername() : "",
       },
       parseObjects,
+      windowWith: window.innerWidth,
+      config: {
+        debug: config.debug,
+      },
     }
   },
   mutations: {
@@ -68,6 +82,9 @@ const store = createStore({
       // If user is now logged in set current user.id
       if (isLoggedIn) state.user.id = getUser().id
       else state.user.id = ""
+    },
+    refreshWindowSize(state) {
+      state.windowWith = window.innerWidth
     },
   },
 })

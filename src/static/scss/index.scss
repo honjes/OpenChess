@@ -1,7 +1,3 @@
-html {
-  overflow: hidden;
-}
-
 @import "./vars.scss";
 // chessboard Styles
 @import "./chessboard.scss";
@@ -9,4 +5,3 @@ html {
 // site Styles
 @import "./generell.scss";
 @import "./sites.scss";
-@import "./components.scss";

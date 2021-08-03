@@ -1,12 +1,10 @@
 <template>
-  <chessboard
-    style="margin-top: 20px"
-    :class="styleClass"
-    :fen="defaultFen"
-    @onMove="onChessMove"
-  />
-  <div style="margin-top: 20px">
-    <p>Fen: {{ currentFen }}</p>
+  <div class="chessGame" :class="styleClass">
+    <chessboard
+      style="margin-top: 20px"
+      :fen="defaultFen"
+      @onMove="onChessMove"
+    />
   </div>
 </template>
 
@@ -43,4 +41,9 @@ export default {
 }
 </script>
 
-<style></style>
+<style lang="scss">
+.chessGame {
+  display: flex;
+  justify-content: center;
+}
+</style>
