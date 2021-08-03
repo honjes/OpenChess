@@ -5,7 +5,6 @@
       :style="{ width: gameWidth, height: gameWidth }"
       class="cg-board-wrap"
     ></div>
-    <br />
   </div>
 </template>
 
@@ -206,7 +205,6 @@ export default {
       board: null,
       promotions: [],
       promoteTo: "q",
-      debug: config.debug,
     }
   },
   mounted() {
