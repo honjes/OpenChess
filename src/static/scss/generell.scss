@@ -3,13 +3,16 @@ body {
   margin: 0;
   background-color: #262626;
   color: $default-text-color;
+  .it-input-label {
+    color: $default-text-color;
+  }
 
   #app {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
-    margin-top: 60px;
+    margin-top: 15px;
 
     /* Utility classes */
     .oc-container {
