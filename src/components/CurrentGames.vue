@@ -1,11 +1,11 @@
 <template>
   <div class="oc-current_games">
-    debug: {{ currentGames }}
+    <div v-if="debug">debug: {{ currentGames }}</div>
     <div v-if="currentGames.length > 0">
       <div
         v-for="game in currentGames"
         :key="game.objectId"
-        class="oc-clickable oc-hover"
+        class="single_game oc-clickable oc-hover"
         @click="toGamePage(game.id)"
       >
         <span class="oc-disabled">vs </span>
@@ -31,6 +31,11 @@ export default {
       currentGames: ref([]),
     }
   },
+  computed: {
+    debug() {
+      return this.$store.state.config.debug
+    },
+  },
   async mounted() {
     this.currentGames = await parseQuery(this.$store.state.parseObjects.Game, {
       users: this.$store.state.user.username,
@@ -47,7 +52,10 @@ export default {
 <style lang="scss">
 .oc-current_games {
   border: 1px solid #000;
-  padding: 7px 0;
+  padding: 0 0;
   font-size: 1.1em;
+  .single_game {
+    padding: 7px 0;
+  }
 }
 </style>
