@@ -1,11 +1,14 @@
 <template>
   <div class="game_site">
     <Nav />
-    <Chess />
+    <div class="game_content">
+      <Chess />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
+import Nav from "../components/Nav.vue"
 import Chess from "../components/Chess.vue"
 import { ref } from "vue"
 import { isLoggedIn } from "../util/parse"
@@ -21,6 +24,7 @@ export default {
   },
   components: {
     Chess,
+    Nav,
   },
 }
 </script>
