@@ -1,6 +1,10 @@
 <template>
   <div class="blue merida">
-    <div ref="board" class="cg-board-wrap"></div>
+    <div
+      ref="board"
+      :style="{ width: gameWidth, height: gameWidth }"
+      class="cg-board-wrap"
+    ></div>
     <br />
   </div>
 </template>
@@ -9,8 +13,9 @@
 import { Chess } from "chess.js"
 import { Chessground } from "chessground"
 import { uniques } from "../util/chessboard"
-import config from "../config"
+import { isUndefined } from "lodash"
 import { ref } from "vue"
+import config from "../config"
 
 export default {
   name: "chessboard",
@@ -53,6 +58,14 @@ export default {
     },
   },
   methods: {
+    setGameWidth() {
+      this.windowWith = window.innerWidth
+      const gameBorder = 50
+      if (isUndefined(this) || this.windowWith > 700 + gameBorder)
+        this.gameWidth = "700px"
+      else this.gameWidth = `${this.windowWith - gameBorder}px`
+    },
+    /* Chess functions */
     possibleMoves() {
       const dests = new Map()
       this.game.SQUARES.forEach(s => {
@@ -187,6 +200,8 @@ export default {
   },
   setup() {
     return {
+      windowWith: ref(0),
+      gameWidth: ref("700px"),
       game: new Chess(),
       board: null,
       promotions: [],
@@ -196,6 +211,17 @@ export default {
   },
   mounted() {
     this.loadPosition()
+
+    const windowWithListener = this.$store.subscribe((mutation, state) => {
+      if (mutation.type === "refreshWindowSize") {
+        this.setGameWidth()
+      }
+    })
+    this.setGameWidth()
+
+    return {
+      windowWithListener,
+    }
   },
 }
 </script>

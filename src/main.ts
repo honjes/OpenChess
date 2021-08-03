@@ -43,6 +43,7 @@ export interface StoreInterface {
   parseObjects: {
     Game: any
   }
+  windowWith: number
 }
 
 initaliseParse()
@@ -59,6 +60,7 @@ const store = createStore({
         username: isLoggedIn ? parseUser.getUsername() : "",
       },
       parseObjects,
+      windowWith: window.innerWidth,
     }
   },
   mutations: {
@@ -73,6 +75,9 @@ const store = createStore({
       // If user is now logged in set current user.id
       if (isLoggedIn) state.user.id = getUser().id
       else state.user.id = ""
+    },
+    refreshWindowSize(state) {
+      state.windowWith = window.innerWidth
     },
   },
 })
