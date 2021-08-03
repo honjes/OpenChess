@@ -1,16 +1,31 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
+import { isString } from "lodash"
 
 export interface SingeUpUserData {
-  username: string
+  userId: string
   password: string
   email: string
 }
 
 export interface ParseCurrentUserResponse {
   id: string
-  username: string
-  [index: string]: string | number | undefined
+  userId: string
+  getuserId?: () => string
+  get?: (par: string) => string
+  [index: string]: string | number | undefined | Function
+}
+
+export interface ParseGameResponse {
+  id: string
+  get?: (par: string) => string
+  getEnemy?: (id: string) => ParseCurrentUserResponse
+  isUsersTurn?: (id: string) => boolean
+  [index: string]: string | number | undefined | Function
+}
+
+export interface ParseGameCreate {
+  user: any[]
 }
 
 /**
@@ -19,10 +34,7 @@ export interface ParseCurrentUserResponse {
 export function initaliseParse(): boolean {
   if (!config.debug) {
     try {
-      Parse.initialize(
-        config.back4app_applicationId,
-        config.back4app_javascriptKey
-      )
+      Parse.initialize(config.back4app_applicationId, config.back4app_javascriptKey)
       Parse.serverURL = config.back4app_url
       Parse.secret = config.parse_secret
       Parse.enableEncryptedUser()
@@ -34,19 +46,24 @@ export function initaliseParse(): boolean {
   return false
 }
 
+function createParseGameObject() {
+  return Parse.Object.extend("Game", {
+    getEnemy: function (userId: string): any {
+      return this.get("users").filter(val => val.id !== userId)[0]
+    },
+    isUsersTurn: function (userId: string): boolean {
+      const turn = this.get("turn")
+      return turn === userId || turn === "choose"
+    },
+  })
+}
+
 /**
  * Creates all Parse Objects needed
  * @returns {} - Returns an object with the extended parse Objects
  */
 export function getParseObjects() {
-  const Game = Parse.Object.extend("Game", {
-    getEnemy: function (userName: string): any {
-      return this.get("users").filter(val => val !== userName)[0]
-    },
-    isUsersTurn: function (userName: string): boolean {
-      return this.get("turn") === userName
-    },
-  })
+  const Game = createParseGameObject()
 
   return { Game: new Game() }
 }
@@ -58,7 +75,7 @@ export function getParseObjects() {
 export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
   if (!config.debug) {
     const parseUser = new Parse.User()
-    parseUser.set("username", userData.username)
+    parseUser.set("userId", userData.userId)
     parseUser.set("email", userData.email)
     parseUser.set("password", userData.password)
 
@@ -74,17 +91,14 @@ export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
 
 /**
  * Handels the login Process
- * @param username {string} - Username of the User that should be logged in
+ * @param userId {string} - userId of the User that should be logged in
  * @param password {string} - Password of the User
  * @returns {Promise<boolean>} - returns true if successfull signed in els returns false
  */
-export async function loginUser(
-  username: string,
-  password: string
-): Promise<boolean> {
+export async function loginUser(userId: string, password: string): Promise<boolean> {
   if (!config.debug) {
     try {
-      const parseUser = await Parse.User.logIn(username, password, {
+      const parseUser = await Parse.User.logIn(userId, password, {
         usePost: true,
       })
       return true
@@ -117,14 +131,29 @@ export function isLoggedIn(): boolean {
 }
 
 /**
- * Check the current loggedin user and returns its Id
- * @returns {string} - Returns the UserId if logged in else returns empty string
+ * Check the current loggedin user and returns it
+ * @returns {ParseCurrentUserResponse | false} - Returns the Userobject if logged in else returns false
  */
-export function getUser(): any {
+export function getCurrentUser(): ParseCurrentUserResponse | false {
   if (!config.debug) {
     const currentUser: ParseCurrentUserResponse = Parse.User.current()
     if (currentUser?.id) return currentUser
   }
+  return false
+}
+
+export async function createGameWithCurrent(enemyName: string): Promise<boolean> {
+  const Game = createParseGameObject()
+  const users = [getCurrentUser(), await getUserByName(enemyName)]
+
+  const gameObject = new Game()
+  gameObject.set("users", users)
+  try {
+    await gameObject.save()
+  } catch (error) {
+    console.error("error:", error)
+  }
+
   return false
 }
 
@@ -137,7 +166,9 @@ export function getUser(): any {
  */
 export async function parseQuery(
   object: any,
-  queryParams?: { [index: string]: string | number }
+  queryParams?: {
+    [index: string]: string | number | ParseCurrentUserResponse | ParseGameResponse
+  }
 ): Promise<any | false> {
   if (!config.debug && isLoggedIn()) {
     try {
@@ -154,6 +185,53 @@ export async function parseQuery(
       console.error("error: ", error)
       return false
     }
+  }
+  return false
+}
+
+/**
+ * Returns a specific game or games for a specific user
+ * @param connection {string | ParseCurrentUserResponse} - Id of a specific game or userObject to get games for that user
+ */
+export async function getGame(
+  connection: ParseCurrentUserResponse
+): Promise<ParseGameResponse[] | false>
+export async function getGame(connection: string): Promise<ParseGameResponse | false>
+export async function getGame(
+  connection: string | ParseCurrentUserResponse
+): Promise<ParseGameResponse | false | ParseGameResponse[]> {
+  if (isLoggedIn()) {
+    if (isString(connection)) {
+      const response = await parseQuery(createParseGameObject(), {
+        objectId: String(connection),
+      })
+      return response[0]
+    } else {
+      const response = await parseQuery(createParseGameObject(), {
+        users: connection,
+      })
+      return response
+    }
+  }
+  return false
+}
+
+export async function getUserById(userId: string): Promise<ParseGameResponse | false> {
+  if (isLoggedIn()) {
+    const response = await parseQuery(Parse.User, {
+      objectId: userId,
+    })
+    return response[0]
+  }
+  return false
+}
+
+export async function getUserByName(userId: string): Promise<ParseGameResponse | false> {
+  if (isLoggedIn()) {
+    const response = await parseQuery(Parse.User, {
+      userId: userId,
+    })
+    return response[0]
   }
   return false
 }
