@@ -235,3 +235,18 @@ export async function getUserByName(userId: string): Promise<ParseGameResponse |
   }
   return false
 }
+
+export async function callCloudCode(
+  name: string,
+  params: { [index: string]: string | number }
+): Promise<false | { message: string; value?: any }> {
+  if (isLoggedIn()) {
+    try {
+      const response = await Parse.Cloud.run(name, params)
+      return response
+    } catch (error) {
+      console.error("error: ", error)
+    }
+  }
+  return false
+}

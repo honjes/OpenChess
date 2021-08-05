@@ -17,7 +17,7 @@
 import Nav from "../components/Nav.vue"
 import Chess from "../components/Chess.vue"
 import { ref } from "vue"
-import { getGame, isLoggedIn } from "../util/parse"
+import { callCloudCode, getGame, isLoggedIn } from "../util/parse"
 import Avatar from "../components/Avatar.vue"
 export default {
   name: "Game",
@@ -34,6 +34,9 @@ export default {
   methods: {
     async setupGameConnection() {
       this.game = await getGame(this.gameId)
+      const turn = this.game.get("turn")
+      if (turn === "" || typeof turn !== typeof "string")
+        callCloudCode("setGameStarter", { gameId: this.gameId })
     },
   },
   components: {
