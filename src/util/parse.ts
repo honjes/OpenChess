@@ -9,25 +9,23 @@ export interface SingeUpUserData {
   email: string
 }
 
-export interface ParseCurrentUserResponse {
+export interface ParseObject {
   id: string
-  userId: string
-  getuserId?: () => string
+  get?: (par: string) => string | boolean | ParseObject
+  [index: string]:
+    | string
+    | number
+    | undefined
+    | ((index?: string) => string | boolean | ParseObject)
+}
+
+export interface ParseUser extends ParseObject {
   getUsername?: () => string
-  get?: (par: string) => string
-  [index: string]: string | number | undefined | Function
 }
 
-export interface ParseGameResponse {
-  id: string
-  get?: (par: string) => string
-  getEnemy?: (id: string) => ParseCurrentUserResponse
+export interface ParseGame extends ParseObject {
+  getEnemy?: (id: string) => ParseUser
   isUsersTurn?: (id: string) => boolean
-  [index: string]: string | number | undefined | Function
-}
-
-export interface ParseGameCreate {
-  user: any[]
 }
 
 /**
@@ -195,7 +193,7 @@ export async function createGameWithCurrent(enemyName: string): Promise<boolean>
 export async function parseQuery(
   object: any,
   queryParams?: {
-    [index: string]: string | number | ParseCurrentUserResponse | ParseGameResponse
+    [index: string]: string | number | ParseUser | ParseGame
   }
 ): Promise<any | false> {
   if (!config.debug && isLoggedIn()) {
@@ -219,15 +217,13 @@ export async function parseQuery(
 
 /**
  * Returns a specific game or games for a specific user
- * @param connection {string | ParseCurrentUserResponse} - Id of a specific game or userObject to get games for that user
+ * @param connection {string | ParseUser} - Id of a specific game or userObject to get games for that user
  */
+export async function getGame(connection: ParseUser): Promise<ParseGame[] | false>
+export async function getGame(connection: string): Promise<ParseGame | false>
 export async function getGame(
-  connection: ParseCurrentUserResponse
-): Promise<ParseGameResponse[] | false>
-export async function getGame(connection: string): Promise<ParseGameResponse | false>
-export async function getGame(
-  connection: string | ParseCurrentUserResponse
-): Promise<ParseGameResponse | false | ParseGameResponse[]> {
+  connection: string | ParseUser
+): Promise<ParseGame | false | ParseGame[]> {
   if (isLoggedIn()) {
     if (isString(connection)) {
       const response = await parseQuery(createParseGameObject(), {
@@ -244,7 +240,7 @@ export async function getGame(
   return false
 }
 
-export async function getUserById(userId: string): Promise<ParseGameResponse | false> {
+export async function getUserById(userId: string): Promise<ParseGame | false> {
   if (isLoggedIn()) {
     const response = await parseQuery(Parse.User, {
       objectId: userId,
@@ -254,7 +250,7 @@ export async function getUserById(userId: string): Promise<ParseGameResponse | f
   return false
 }
 
-export async function getUserByName(userId: string): Promise<ParseGameResponse | false> {
+export async function getUserByName(userId: string): Promise<ParseGame | false> {
   if (isLoggedIn()) {
     const response = await parseQuery(Parse.User, {
       userId: userId,
