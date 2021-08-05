@@ -18,6 +18,10 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: "/:pathMatch(.*)*",
+      redirect: "/",
+    },
+    {
       path: "/",
       name: "home",
       component: defineAsyncComponent(() => import("./pages/home.vue")),
@@ -26,6 +30,11 @@ const router = createRouter({
       path: "/login",
       name: "login",
       component: defineAsyncComponent(() => import("./pages/login.vue")),
+    },
+    {
+      path: "/user",
+      name: "user",
+      component: defineAsyncComponent(() => import("./pages/user.vue")),
     },
     {
       path: "/game/:gameId",
@@ -41,6 +50,7 @@ export interface StoreInterface {
     id: string
     username: string
     color: string
+    email: string
   }
   parseObjects: {
     Game: any
@@ -56,14 +66,18 @@ const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
     const parseObjects = getParseObjects()
-    const currentUser = getCurrentUser()
-    const parseUser = currentUser
-      ? {
+    let parseUser = { id: "", username: "", color: "", email: "" }
+    if (isLoggedIn) {
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        parseUser = {
           id: currentUser.id,
           username: currentUser.getUsername(),
-          color: currentUser.get("color"),
+          color: String(currentUser.get("color")),
+          email: String(currentUser.get("email")),
         }
-      : { id: "", username: "", color: "" }
+      }
+    }
 
     return {
       isLoggedIn,
@@ -89,8 +103,21 @@ const store = createStore({
       if (currentUser !== false) state.user.id = currentUser.id
       else state.user.id = ""
     },
-    refreshWindowSize(state) {
+    refreshWindowSize(state: StoreInterface) {
       state.windowWith = window.innerWidth
+    },
+    updateCurrentUser(state: StoreInterface) {
+      if (state.isLoggedIn) {
+        const currentUser = getCurrentUser()
+        if (currentUser) {
+          state.user = {
+            id: currentUser.id,
+            username: currentUser.getUsername(),
+            color: String(currentUser.get("color")),
+            email: String(currentUser.get("email")),
+          }
+        }
+      }
     },
   },
 })

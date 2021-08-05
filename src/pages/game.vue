@@ -1,6 +1,5 @@
 <template>
-  <div class="game_site">
-    <Nav />
+  <div class="oc-game_site">
     <div class="game_content">
       <div class="info_header">
         <div class="user">
@@ -22,7 +21,7 @@ import Avatar from "../components/Avatar.vue"
 export default {
   name: "Game",
   async mounted() {
-    if (!isLoggedIn()) this.$router.push({ name: "login" })
+    isLoggedIn(this.$router)
     await this.setupGameConnection()
   },
   data() {

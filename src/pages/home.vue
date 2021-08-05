@@ -1,6 +1,5 @@
 <template>
-  <div id="home_site">
-    <Nav />
+  <div id="oc-home_site">
     <div class="home_content">
       <div class="left"><CreateGame /></div>
       <div class="games"><CurrentGames /></div>
@@ -15,7 +14,7 @@ import { isLoggedIn } from "../util/parse"
 
 export default {
   mounted() {
-    if (!isLoggedIn()) this.$router.push({ name: "login" })
+    isLoggedIn(this.$router)
   },
   components: {
     Nav,

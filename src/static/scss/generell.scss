@@ -1,10 +1,16 @@
 body {
   padding: 0;
   margin: 0;
-  background-color: #262626;
+  background-color: $default-background-color;
   color: $default-text-color;
+
+  // Equal Overrides
   .it-input-label {
     color: $default-text-color;
+  }
+  .it-modal-body,
+  .it-modal-footer {
+    background-color: $default-background-color;
   }
 
   #app {

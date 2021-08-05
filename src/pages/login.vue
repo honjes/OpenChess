@@ -1,5 +1,5 @@
 <template>
-  <div id="login_site" class="container">
+  <div id="oc-login_site" class="container">
     <div v-if="showSignUpForm">
       <h3>Create User Account</h3>
       <div class="form">
@@ -63,19 +63,25 @@
 <script lang="ts">
 import { isUndefined } from "lodash"
 import { ref } from "vue"
-import config from "../config"
 import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
+import {
+  usernameCheck,
+  emailCheck,
+  passwordCheck,
+  FormCheckError,
+  setError,
+  setValid,
+  hasNoErrors,
+} from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const showSignUpForm = ref(config.debug ? false : !isLoggedIn())
-    const showLoggingInForm = ref(false)
+    const showSignUpForm = ref(Boolean(getItem("showSignUpForm")))
     return {
       showSignUpForm,
-      showLoggingInForm,
       email: ref(getItem("email")),
       username: ref(getItem("username")),
       password: ref(""),
@@ -84,16 +90,18 @@ export default {
     }
   },
   mounted() {
+    // Check if user is logedIn and then redirecting
     if (isLoggedIn()) this.$router.push({ name: "home" })
   },
   methods: {
     changeForm() {
       this.showSignUpForm = !this.showSignUpForm
-      this.showLoggingInForm = !this.showLoggingInForm
+      setItem("showSignUpForm", this.showSignUpForm ? "true" : "")
     },
     redirectTo(page = "home") {
       this.$router.push({ name: page })
     },
+    // Imported Functions
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
@@ -122,67 +130,32 @@ export default {
         } else this.$Message.danger({ text: "Error while Logging in" })
       }
     },
-    // Validation Functions
-    setError(id: string, value: string): false {
-      this.error[id] = value
-      return false
+    updateError(error: FormCheckError) {
+      this.error = setError(this.error, error)
     },
-    setValid(id: string): true {
-      if (!isUndefined(this.error[id])) delete this.error[id]
-      return true
-    },
-    /**
-     * Checks if any errors are sets
-     * @returns {boolean} - returns true if its finds any errors else false
-     */
-    checkError(): boolean {
-      if (!isUndefined(this.error?.username)) return true
-      if (!isUndefined(this.error?.password)) return true
-      if (!isUndefined(this.error?.email)) return true
-      return false
+    updateValid(fieldName: string) {
+      this.error = setValid(this.error, fieldName)
     },
     validateForm(): boolean {
       // check if all fields are set
-      let { username, password, email, showSignUpForm, setError } = this
-      // Validates Username
-      function usernameCheck(): boolean {
-        // Check if Username is set
-        const empty = username === ""
-        if (empty) return setError("username", "Username needs to be set")
+      let { username, password, email, showSignUpForm } = this
 
-        return true
-      }
-      // Validates Email
-      function emailCheck(): boolean {
-        // only check Email if user is trying to singeup
-        if (showSignUpForm) {
-          // Check if Email is set
-          const empty = email === ""
-          if (empty) return setError("email", "Email needs to be set")
-        }
-        return true
-      }
-      // Validates Password
-      function passwordCheck(): boolean {
-        // Check if Password is set
-        const empty = password === ""
-        if (empty) return setError("password", "Password needs to be set")
+      // Checking Username
+      const usernameCheckRes: FormCheckError | true = usernameCheck(username)
+      if (usernameCheckRes === true) this.updateValid("username")
+      else this.updateError(usernameCheckRes)
 
-        // Check if Password is set
-        const short = password.length < 8
-        if (short)
-          return setError(
-            "password",
-            "Password needs to be at least 8 characters long"
-          )
-        return true
-      }
+      // Checking Email
+      const emailCheckRes: FormCheckError | true = showSignUpForm ? emailCheck(email) : true
+      if (emailCheckRes === true) this.updateValid("email")
+      else this.updateError(emailCheckRes)
 
-      if (usernameCheck()) this.setValid("username")
-      if (emailCheck()) this.setValid("email")
-      if (passwordCheck()) this.setValid("password")
+      // Checking Password
+      const passwordCheckRes: FormCheckError | true = passwordCheck(password)
+      if (passwordCheckRes === true) this.updateValid("password")
+      else this.updateError(passwordCheckRes)
 
-      return !this.checkError()
+      return hasNoErrors(this.error)
     },
     // Form -> State functions
     updateEmail(e) {
