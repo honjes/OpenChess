@@ -71,11 +71,9 @@ export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const showSignUpForm = ref(config.debug ? false : !isLoggedIn())
-    const showLoggingInForm = ref(false)
+    const showSignUpForm = ref(true)
     return {
       showSignUpForm,
-      showLoggingInForm,
       email: ref(getItem("email")),
       username: ref(getItem("username")),
       password: ref(""),
@@ -84,12 +82,12 @@ export default {
     }
   },
   mounted() {
+    // Check if user is logedIn and then redirecting
     if (isLoggedIn()) this.$router.push({ name: "home" })
   },
   methods: {
     changeForm() {
       this.showSignUpForm = !this.showSignUpForm
-      this.showLoggingInForm = !this.showLoggingInForm
     },
     redirectTo(page = "home") {
       this.$router.push({ name: page })
@@ -170,11 +168,7 @@ export default {
 
         // Check if Password is set
         const short = password.length < 8
-        if (short)
-          return setError(
-            "password",
-            "Password needs to be at least 8 characters long"
-          )
+        if (short) return setError("password", "Password needs to be at least 8 characters long")
         return true
       }
 
