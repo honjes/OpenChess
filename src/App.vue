@@ -1,11 +1,14 @@
 <template>
   <div class="oc-container">
+    <EmailVerification v-if="isLoggedIn()" />
     <router-view />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue"
+import { isLoggedIn } from "./util/parse"
+import EmailVerification from "./components/EmailVerification.vue"
 
 export default defineComponent({
   name: "app",
@@ -19,6 +22,10 @@ export default defineComponent({
     handleWindowResize() {
       this.$store.commit("refreshWindowSize")
     },
+    isLoggedIn,
+  },
+  components: {
+    EmailVerification,
   },
 })
 </script>
