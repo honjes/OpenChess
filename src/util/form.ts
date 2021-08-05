@@ -44,3 +44,13 @@ export function setValid(errorObject: ErrorObject, fieldName: string): ErrorObje
   if (!isUndefined(errorObject[fieldName])) delete errorObject[fieldName]
   return errorObject
 }
+
+/**
+ * Checks if any errors are in the given Object
+ * @returns {boolean} - returns true if no Errors are found else returns false
+ */
+export function hasNoError(errorOBject: ErrorObject): boolean {
+  const keys = Object.keys(errorOBject)
+  if (keys.length > 0) return false
+  return true
+}

@@ -71,6 +71,7 @@ import {
   FormCheckError,
   setError,
   setValid,
+  hasNoError,
 } from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
 
@@ -106,6 +107,7 @@ export default {
     passwordCheck,
     setError,
     setValid,
+    hasNoError,
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
@@ -134,16 +136,6 @@ export default {
         } else this.$Message.danger({ text: "Error while Logging in" })
       }
     },
-    /**
-     * Checks if any errors are sets
-     * @returns {boolean} - returns true if its finds any errors else false
-     */
-    checkError(): boolean {
-      if (!isUndefined(this.error?.username)) return true
-      if (!isUndefined(this.error?.password)) return true
-      if (!isUndefined(this.error?.email)) return true
-      return false
-    },
     updateError(error: FormCheckError) {
       this.error = this.setError(this.error, error)
     },
@@ -169,7 +161,7 @@ export default {
       if (passwordCheck === true) this.updateValid("password")
       else this.updateError(passwordCheck)
 
-      return !this.checkError()
+      return this.hasNoError(this.error)
     },
     // Form -> State functions
     updateEmail(e) {
