@@ -127,13 +127,15 @@ export async function logoutUser(): Promise<boolean> {
  * @returns {boolean} - Returns if there is a User set as boolean. If router is not given
  */
 export function isLoggedIn(router?: Router): boolean {
-  if (!config.debug) {
-    const curUser = Parse.User.current()
-    const isLoggedIn = Boolean(curUser)
+  let isLoggedIn = false
+
+  // sets isLoggedIn if debug is false
+  if (!config.debug) isLoggedIn = Boolean(Parse.User.current())
+  if (!isLoggedIn) {
     if (isUndefined(router)) return isLoggedIn
-    router.push({ name: "login" })
-  }
-  return false
+    // redirect if router is defined
+    else router.push("login")
+  } else return isLoggedIn
 }
 
 /**
