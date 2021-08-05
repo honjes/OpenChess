@@ -61,14 +61,17 @@ const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
     const parseObjects = getParseObjects()
-    const currentUser = getCurrentUser()
-    const parseUser = currentUser
-      ? {
+    let parseUser = { id: "", username: "", color: "" }
+    if (isLoggedIn) {
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        parseUser = {
           id: currentUser.id,
           username: currentUser.getUsername(),
           color: currentUser.get("color"),
         }
-      : { id: "", username: "", color: "" }
+      }
+    }
 
     return {
       isLoggedIn,
