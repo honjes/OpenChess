@@ -71,7 +71,7 @@ export default {
   name: "Login",
   setup() {
     // shows SingnUp Modal as Default. not showing any modal in debug
-    const showSignUpForm = ref(true)
+    const showSignUpForm = ref(Boolean(getItem("showSignUpForm")))
     return {
       showSignUpForm,
       email: ref(getItem("email")),
@@ -88,6 +88,7 @@ export default {
   methods: {
     changeForm() {
       this.showSignUpForm = !this.showSignUpForm
+      setItem("showSignUpForm", this.showSignUpForm ? "true" : "")
     },
     redirectTo(page = "home") {
       this.$router.push({ name: page })
