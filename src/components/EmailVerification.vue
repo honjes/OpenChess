@@ -18,18 +18,22 @@
 </template>
 
 <script>
-import { isVerified } from "../util/parse"
+import { isVerified, sendVerificationEmail } from "../util/parse"
 import { ref } from "vue"
 
 export default {
-  data() {
-    const hasNoEmailVerification = isVerified()
+  setup() {
+    const hasNoEmailVerification = !isVerified()
     return {
-      hasNoEmailVerification: ref(!hasNoEmailVerification),
+      hasNoEmailVerification: ref(hasNoEmailVerification),
     }
+  },
+  mounted() {
+    if (this.hasNoEmailVerification) sendVerificationEmail()
   },
   methods: {
     resendEmail() {
+      if (this.hasNoEmailVerification) sendVerificationEmail()
       this.$Message.danger({ text: "Resending Email is not Implementet" })
     },
   },

@@ -2,6 +2,8 @@ import Parse from "parse/dist/parse.min.js"
 import config from "../config"
 import { isString, isUndefined } from "lodash"
 import { Router } from "vue-router"
+import { getItem, setItem } from "./localstorage"
+import moment from "moment"
 
 export interface SingeUpUserData {
   username: string
@@ -275,4 +277,25 @@ export async function callCloudCode(
     }
   }
   return false
+}
+
+/**
+ * Sends an VerificationEmail to the current user
+ */
+export async function sendVerificationEmail() {
+  if (isLoggedIn() && !config.debug) {
+    const lastEmail = getItem("lastEmailSend")
+    const lastEmailDate = moment(lastEmail)
+    const dateBefore = moment().subtract(1, "minute")
+
+    if (lastEmail === "" || lastEmailDate.isBefore(dateBefore)) {
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        try {
+          const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
+          setItem("lastEmailSend", moment().toString())
+        } catch (error) {}
+      }
+    }
+  }
 }
