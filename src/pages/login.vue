@@ -63,9 +63,15 @@
 <script lang="ts">
 import { isUndefined } from "lodash"
 import { ref } from "vue"
-import config from "../config"
 import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
-import { usernameCheck, emailCheck, passwordCheck, FormCheckErrorOutput } from "../util/form"
+import {
+  usernameCheck,
+  emailCheck,
+  passwordCheck,
+  FormCheckError,
+  setError,
+  setValid,
+} from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
@@ -98,6 +104,8 @@ export default {
     usernameCheck,
     emailCheck,
     passwordCheck,
+    setError,
+    setValid,
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
@@ -126,15 +134,6 @@ export default {
         } else this.$Message.danger({ text: "Error while Logging in" })
       }
     },
-    // Validation Functions
-    setError(id: string, value: string): false {
-      this.error[id] = value
-      return false
-    },
-    setValid(id: string): true {
-      if (!isUndefined(this.error[id])) delete this.error[id]
-      return true
-    },
     /**
      * Checks if any errors are sets
      * @returns {boolean} - returns true if its finds any errors else false
@@ -145,24 +144,30 @@ export default {
       if (!isUndefined(this.error?.email)) return true
       return false
     },
+    updateError(error: FormCheckError) {
+      this.error = this.setError(this.error, error)
+    },
+    updateValid(fieldName: string) {
+      this.error = this.setValid(this.error, fieldName)
+    },
     validateForm(): boolean {
       // check if all fields are set
-      let { username, password, email, showSignUpForm, setError } = this
+      let { username, password, email, showSignUpForm } = this
 
       // Checking Username
-      const usernameCheck: FormCheckErrorOutput | true = this.usernameCheck(username)
-      if (usernameCheck === true) this.setValid("username")
-      else this.setError(usernameCheck.field, usernameCheck.message)
+      const usernameCheck: FormCheckError | true = this.usernameCheck(username)
+      if (usernameCheck === true) this.updateValid("username")
+      else this.updateError(usernameCheck)
 
       // Checking Email
-      const emailCheck: FormCheckErrorOutput | true = showSignUpForm ? this.emailCheck(email) : true
-      if (emailCheck === true) this.setValid("email")
-      else this.setError(emailCheck.field, emailCheck.message)
+      const emailCheck: FormCheckError | true = showSignUpForm ? this.emailCheck(email) : true
+      if (emailCheck === true) this.updateValid("email")
+      else this.updateError(emailCheck.message)
 
       // Checking Password
-      const passwordCheck: FormCheckErrorOutput | true = this.passwordCheck(password)
-      if (passwordCheck !== true) this.setError(passwordCheck.field, passwordCheck.message)
-      else this.setValid("password")
+      const passwordCheck: FormCheckError | true = this.passwordCheck(password)
+      if (passwordCheck === true) this.updateValid("password")
+      else this.updateError(passwordCheck)
 
       return !this.checkError()
     },
