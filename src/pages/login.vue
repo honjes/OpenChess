@@ -71,7 +71,7 @@ import {
   FormCheckError,
   setError,
   setValid,
-  hasNoError,
+  hasNoErrors,
 } from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
 
@@ -102,12 +102,6 @@ export default {
       this.$router.push({ name: page })
     },
     // Imported Functions
-    usernameCheck,
-    emailCheck,
-    passwordCheck,
-    setError,
-    setValid,
-    hasNoError,
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
@@ -137,31 +131,31 @@ export default {
       }
     },
     updateError(error: FormCheckError) {
-      this.error = this.setError(this.error, error)
+      this.error = setError(this.error, error)
     },
     updateValid(fieldName: string) {
-      this.error = this.setValid(this.error, fieldName)
+      this.error = setValid(this.error, fieldName)
     },
     validateForm(): boolean {
       // check if all fields are set
       let { username, password, email, showSignUpForm } = this
 
       // Checking Username
-      const usernameCheck: FormCheckError | true = this.usernameCheck(username)
-      if (usernameCheck === true) this.updateValid("username")
-      else this.updateError(usernameCheck)
+      const usernameCheckRes: FormCheckError | true = usernameCheck(username)
+      if (usernameCheckRes === true) this.updateValid("username")
+      else this.updateError(usernameCheckRes)
 
       // Checking Email
-      const emailCheck: FormCheckError | true = showSignUpForm ? this.emailCheck(email) : true
-      if (emailCheck === true) this.updateValid("email")
-      else this.updateError(emailCheck.message)
+      const emailCheckRes: FormCheckError | true = showSignUpForm ? emailCheck(email) : true
+      if (emailCheckRes === true) this.updateValid("email")
+      else this.updateError(emailCheckRes)
 
       // Checking Password
-      const passwordCheck: FormCheckError | true = this.passwordCheck(password)
-      if (passwordCheck === true) this.updateValid("password")
-      else this.updateError(passwordCheck)
+      const passwordCheckRes: FormCheckError | true = passwordCheck(password)
+      if (passwordCheckRes === true) this.updateValid("password")
+      else this.updateError(passwordCheckRes)
 
-      return this.hasNoError(this.error)
+      return hasNoErrors(this.error)
     },
     // Form -> State functions
     updateEmail(e) {
