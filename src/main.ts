@@ -103,8 +103,21 @@ const store = createStore({
       if (currentUser !== false) state.user.id = currentUser.id
       else state.user.id = ""
     },
-    refreshWindowSize(state) {
+    refreshWindowSize(state: StoreInterface) {
       state.windowWith = window.innerWidth
+    },
+    updateCurrentUser(state: StoreInterface) {
+      if (state.isLoggedIn) {
+        const currentUser = getCurrentUser()
+        if (currentUser) {
+          state.user = {
+            id: currentUser.id,
+            username: currentUser.getUsername(),
+            color: String(currentUser.get("color")),
+            email: String(currentUser.get("email")),
+          }
+        }
+      }
     },
   },
 })
