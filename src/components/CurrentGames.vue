@@ -12,7 +12,7 @@
         <span v-if="game && getEnemyName(game.getEnemy(currentUser.id).id) !== ''">
           <Avatar
             size="30px"
-            :color="storeUser.color"
+            :color="getEnemyColor(game.getEnemy(currentUser.id).id)"
             :extends="true"
             :text="getEnemyName(game.getEnemy(currentUser.id).id)"
           />
@@ -67,7 +67,9 @@ export default {
         this.userGames.map(async game => {
           const enemyId = game.getEnemy(this.currentUser.id).id
           const enemy = await getUserById(enemyId)
-          return enemy ? { username: enemy.get("username"), id: enemy.id } : false
+          return enemy
+            ? { username: enemy.get("username"), id: enemy.id, color: enemy.get("color") }
+            : false
         })
       )
 
@@ -78,6 +80,13 @@ export default {
         return val.id === enemyId
       })
       if (fenemys.length > 0) return fenemys[0].username
+      else return ""
+    },
+    getEnemyColor(enemyId: string): string {
+      const fenemys = this.enemys.filter(val => {
+        return val.id === enemyId
+      })
+      if (fenemys.length > 0) return fenemys[0].color
       else return ""
     },
   },
