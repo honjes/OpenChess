@@ -4,7 +4,9 @@
     @mouseover="changeExtend"
     @mouseout="changeExtend"
   >
-    <span class="username" ref="extendedText" :style="{ width: textWidth }">{{ text }}</span>
+    <span class="username" ref="extendedText" :style="{ width: textWidth, opacity: textOpacity }">{{
+      text
+    }}</span>
     <it-avatar
       :src="src"
       :text="text"
@@ -28,7 +30,7 @@ export default {
     color: { type: String, default: null },
     size: { type: String, default: "40px" },
     square: { type: Boolean, default: false },
-    extended: { type: Boolean, default: false },
+    extends: { type: Boolean, default: false },
   },
   setup(props) {
     return {
@@ -41,12 +43,16 @@ export default {
   data() {},
   computed: {
     textWidth() {
-      if (this.extendTextWidth === 0) return "auto"
+      if (!this.$props.extends || this.extendTextWidth === 0) return "auto"
       else if (!this.extend) return "15px"
       return `${this.extendTextWidth + 25}px`
     },
+    textOpacity() {
+      if (!this.$props.extends || !this.extend) return 0
+      else return 1
+    },
     avatarTransform() {
-      if (!this.extend) return "translate(0)"
+      if (!this.$props.extends || !this.extend) return "translate(0)"
       return `translate(${this.extendTextWidth + 6}px)`
     },
   },
@@ -76,7 +82,6 @@ export default {
     height: 25px;
     background: #fff;
     color: transparent;
-    opacity: 0;
     border-radius: 120px 160px 160px 120px;
     transition: ease all 1s;
     padding: 5px 0 0 10px;
@@ -87,7 +92,6 @@ export default {
   &.extended {
     animation: roll-right 1s;
     .username {
-      opacity: 1;
       color: #000;
     }
   }

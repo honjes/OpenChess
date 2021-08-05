@@ -13,7 +13,7 @@
           <Avatar
             size="30px"
             :color="storeUser.color"
-            :extended="true"
+            :extends="true"
             :text="getEnemyName(game.getEnemy(currentUser.id).id)"
           />
         </span>
