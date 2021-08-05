@@ -72,7 +72,7 @@ const store = createStore({
         parseUser = {
           id: currentUser.id,
           username: currentUser.getUsername(),
-          color: currentUser.get("color"),
+          color: String(currentUser.get("color")),
         }
       }
     }
