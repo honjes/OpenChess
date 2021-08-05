@@ -70,6 +70,12 @@ export function getParseObjects() {
   return { Game: new Game() }
 }
 
+async function setCurrentUser(): Promise<void> {
+  const currentUser = getCurrentUser()
+  if (currentUser && isUndefined(currentUser.get("emailVerified")))
+    await getUserById(currentUser.id)
+}
+
 /**
  * Handels the singeup Process
  * @param userData {SingeUpUserData} - Userdata that is used to create an Useraccount
@@ -83,6 +89,7 @@ export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
 
     try {
       await parseUser.signUp()
+      await setCurrentUser()
       return true
     } catch (error) {
       console.error("error: ", error)
@@ -103,6 +110,7 @@ export async function loginUser(userId: string, password: string): Promise<boole
       const parseUser = await Parse.User.logIn(userId, password, {
         usePost: true,
       })
+      await setCurrentUser()
       return true
     } catch (error) {
       console.error("error: ", error)
