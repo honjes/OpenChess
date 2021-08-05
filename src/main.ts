@@ -50,6 +50,7 @@ export interface StoreInterface {
     id: string
     username: string
     color: string
+    email: string
   }
   parseObjects: {
     Game: any
@@ -65,7 +66,7 @@ const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn()
     const parseObjects = getParseObjects()
-    let parseUser = { id: "", username: "", color: "" }
+    let parseUser = { id: "", username: "", color: "", email: "" }
     if (isLoggedIn) {
       const currentUser = getCurrentUser()
       if (currentUser) {
@@ -73,9 +74,11 @@ const store = createStore({
           id: currentUser.id,
           username: currentUser.getUsername(),
           color: String(currentUser.get("color")),
+          email: String(currentUser.get("email")),
         }
       }
     }
+    console.log(parseUser)
 
     return {
       isLoggedIn,
