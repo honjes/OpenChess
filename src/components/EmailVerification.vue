@@ -6,7 +6,8 @@
       </template>
 
       <template #body>
-        <p>Modal body. You can put here whatever you want: forms, images, text</p>
+        <p>An Email was send to the Email you saved in your Account.</p>
+        <p>Email verification is needed to play Games</p>
       </template>
 
       <template #actions>
