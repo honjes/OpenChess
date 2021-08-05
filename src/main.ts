@@ -78,7 +78,6 @@ const store = createStore({
         }
       }
     }
-    console.log(parseUser)
 
     return {
       isLoggedIn,

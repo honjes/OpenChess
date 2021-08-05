@@ -65,6 +65,7 @@ import { isUndefined } from "lodash"
 import { ref } from "vue"
 import config from "../config"
 import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
+import { usernameCheck, emailCheck, passwordCheck, FormCheckErrorOutput } from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
 
 export default {
@@ -93,6 +94,10 @@ export default {
     redirectTo(page = "home") {
       this.$router.push({ name: page })
     },
+    // Imported Functions
+    usernameCheck,
+    emailCheck,
+    passwordCheck,
     // Parse Functions
     async registerUser() {
       this.validateAfterInput = true
@@ -143,39 +148,21 @@ export default {
     validateForm(): boolean {
       // check if all fields are set
       let { username, password, email, showSignUpForm, setError } = this
-      // Validates Username
-      function usernameCheck(): boolean {
-        // Check if Username is set
-        const empty = username === ""
-        if (empty) return setError("username", "Username needs to be set")
 
-        return true
-      }
-      // Validates Email
-      function emailCheck(): boolean {
-        // only check Email if user is trying to singeup
-        if (showSignUpForm) {
-          // Check if Email is set
-          const empty = email === ""
-          if (empty) return setError("email", "Email needs to be set")
-        }
-        return true
-      }
-      // Validates Password
-      function passwordCheck(): boolean {
-        // Check if Password is set
-        const empty = password === ""
-        if (empty) return setError("password", "Password needs to be set")
+      // Checking Username
+      const usernameCheck: FormCheckErrorOutput | true = this.usernameCheck(username)
+      if (usernameCheck === true) this.setValid("username")
+      else this.setError(usernameCheck.field, usernameCheck.message)
 
-        // Check if Password is set
-        const short = password.length < 8
-        if (short) return setError("password", "Password needs to be at least 8 characters long")
-        return true
-      }
+      // Checking Email
+      const emailCheck: FormCheckErrorOutput | true = showSignUpForm ? this.emailCheck(email) : true
+      if (emailCheck === true) this.setValid("email")
+      else this.setError(emailCheck.field, emailCheck.message)
 
-      if (usernameCheck()) this.setValid("username")
-      if (emailCheck()) this.setValid("email")
-      if (passwordCheck()) this.setValid("password")
+      // Checking Password
+      const passwordCheck: FormCheckErrorOutput | true = this.passwordCheck(password)
+      if (passwordCheck !== true) this.setError(passwordCheck.field, passwordCheck.message)
+      else this.setValid("password")
 
       return !this.checkError()
     },
