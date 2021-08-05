@@ -15,7 +15,7 @@ import { isLoggedIn } from "../util/parse"
 
 export default {
   mounted() {
-    if (!isLoggedIn()) this.$router.push({ name: "login" })
+    isLoggedIn(this.$router)
   },
   components: {
     Nav,

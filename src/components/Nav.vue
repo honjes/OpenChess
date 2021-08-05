@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { logoutUser, isLoggedIn } from "../util/parse"
+import { logoutUser } from "../util/parse"
 export default {
   name: "Nav",
   methods: {
@@ -17,7 +17,6 @@ export default {
         this.$router.push({ name: "login" })
       } else this.$Message.danger({ text: "Logout failed" })
     },
-    isLoggedIn,
   },
 }
 </script>

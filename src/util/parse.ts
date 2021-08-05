@@ -1,9 +1,10 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
-import { isString } from "lodash"
+import { isString, isUndefined } from "lodash"
+import { Router } from "vue-router"
 
 export interface SingeUpUserData {
-  userId: string
+  username: string
   password: string
   email: string
 }
@@ -12,6 +13,7 @@ export interface ParseCurrentUserResponse {
   id: string
   userId: string
   getuserId?: () => string
+  getUsername?: () => string
   get?: (par: string) => string
   [index: string]: string | number | undefined | Function
 }
@@ -75,7 +77,7 @@ export function getParseObjects() {
 export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
   if (!config.debug) {
     const parseUser = new Parse.User()
-    parseUser.set("userId", userData.userId)
+    parseUser.set("username", userData.username)
     parseUser.set("email", userData.email)
     parseUser.set("password", userData.password)
 
@@ -121,13 +123,17 @@ export async function logoutUser(): Promise<boolean> {
 
 /**
  * Checks if Parse is currently logged in and returns false if not
- * @returns {boolean} - Returns if there is a User set as boolean
+ * @param router {Router} - if given the function will redirect to the loginpage if not logged in
+ * @returns {boolean} - Returns if there is a User set as boolean. If router is not given
  */
-export function isLoggedIn(): boolean {
+export function isLoggedIn(router?: Router): boolean {
   if (!config.debug) {
     const curUser = Parse.User.current()
-    return Boolean(curUser)
-  } else return false
+    const isLoggedIn = Boolean(curUser)
+    if (isUndefined(router)) return isLoggedIn
+    router.push({ name: "login" })
+  }
+  return false
 }
 
 /**

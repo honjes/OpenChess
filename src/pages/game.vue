@@ -22,7 +22,7 @@ import Avatar from "../components/Avatar.vue"
 export default {
   name: "Game",
   async mounted() {
-    if (!isLoggedIn()) this.$router.push({ name: "login" })
+    isLoggedIn(this.$router)
     await this.setupGameConnection()
   },
   data() {
