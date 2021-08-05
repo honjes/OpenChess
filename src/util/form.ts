@@ -49,7 +49,7 @@ export function setValid(errorObject: ErrorObject, fieldName: string): ErrorObje
  * Checks if any errors are in the given Object
  * @returns {boolean} - returns true if no Errors are found else returns false
  */
-export function hasNoError(errorOBject: ErrorObject): boolean {
+export function hasNoErrors(errorOBject: ErrorObject): boolean {
   const keys = Object.keys(errorOBject)
   if (keys.length > 0) return false
   return true

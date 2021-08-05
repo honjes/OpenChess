@@ -11,12 +11,14 @@ export interface SingeUpUserData {
 
 export interface ParseObject {
   id: string
-  get?: (par: string) => string | boolean | ParseObject
+  get?: (varName: string) => string | boolean | ParseObject
+  set?: (varName: string, varValue: any) => void
+  save?: () => void
   [index: string]:
     | string
     | number
     | undefined
-    | ((index?: string) => string | boolean | ParseObject)
+    | ((index?: string, index2?: any) => void | string | boolean | ParseObject)
 }
 
 export interface ParseUser extends ParseObject {
