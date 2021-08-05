@@ -1,10 +1,6 @@
 <template>
-  <div class="chessGame" :class="styleClass">
-    <chessboard
-      style="margin-top: 20px"
-      :fen="defaultFen"
-      @onMove="onChessMove"
-    />
+  <div class="oc-chess chessGame" :class="styleClass">
+    <chessboard style="margin-top: 20px" :fen="defaultFen" @onMove="onChessMove" />
   </div>
 </template>
 

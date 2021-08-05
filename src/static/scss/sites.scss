@@ -1,5 +1,5 @@
 #app {
-  #login_site {
+  #oc-login_site {
     .buttons {
       display: flex;
       justify-content: space-between;
@@ -13,7 +13,7 @@
       }
     }
   }
-  #home_site {
+  #oc-home_site {
     .home_content {
       display: grid;
       grid-template-columns: 50% 50%;

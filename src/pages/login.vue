@@ -1,5 +1,5 @@
 <template>
-  <div id="login_site" class="container">
+  <div id="oc-login_site" class="container">
     <div v-if="showSignUpForm">
       <h3>Create User Account</h3>
       <div class="form">

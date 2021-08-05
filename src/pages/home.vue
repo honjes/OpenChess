@@ -1,5 +1,5 @@
 <template>
-  <div id="home_site">
+  <div id="oc-home_site">
     <Nav />
     <div class="home_content">
       <div class="left"><CreateGame /></div>

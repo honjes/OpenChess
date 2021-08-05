@@ -1,10 +1,6 @@
 <template>
-  <div class="blue merida">
-    <div
-      ref="board"
-      :style="{ width: gameWidth, height: gameWidth }"
-      class="cg-board-wrap"
-    ></div>
+  <div class="oc-chessboard blue merida">
+    <div ref="board" :style="{ width: gameWidth, height: gameWidth }" class="cg-board-wrap"></div>
   </div>
 </template>
 
@@ -60,8 +56,7 @@ export default {
     setGameWidth() {
       this.windowWith = window.innerWidth
       const gameBorder = 50
-      if (isUndefined(this) || this.windowWith > 700 + gameBorder)
-        this.gameWidth = "700px"
+      if (isUndefined(this) || this.windowWith > 700 + gameBorder) this.gameWidth = "700px"
       else this.gameWidth = `${this.windowWith - gameBorder}px`
     },
     /* Chess functions */

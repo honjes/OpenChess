@@ -1,7 +1,9 @@
 <template>
-  <nav>
+  <nav class="oc-nav">
     <it-button text><router-link to="/">Home</router-link></it-button>
-    <it-button v-if="$store.state.isLoggedIn" @click="logout">Logout</it-button>
+    <div v-if="$store.state.isLoggedIn" :class="{ userAvatar: true, extended }">
+      <it-button @click="logout">Logout</it-button>
+    </div>
   </nav>
 </template>
 

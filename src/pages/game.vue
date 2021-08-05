@@ -1,5 +1,5 @@
 <template>
-  <div class="game_site">
+  <div class="oc-game_site">
     <Nav />
     <div class="game_content">
       <div class="info_header">

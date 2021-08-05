@@ -1,5 +1,5 @@
 <template>
-  <div class="pc-user_page"></div>
+  <div class="oc-user_page"></div>
 </template>
 
 <script lang="ts">
