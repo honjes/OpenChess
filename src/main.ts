@@ -18,6 +18,10 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: "/:pathMatch(.*)*",
+      redirect: "/",
+    },
+    {
       path: "/",
       name: "home",
       component: defineAsyncComponent(() => import("./pages/home.vue")),
