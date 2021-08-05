@@ -136,23 +136,35 @@ export async function logoutUser(): Promise<boolean> {
  */
 export function isLoggedIn(router?: Router): boolean {
   let isLoggedIn = false
+  const currentUser = getCurrentUser()
 
   // sets isLoggedIn if debug is false
-  if (!config.debug) isLoggedIn = Boolean(Parse.User.current())
-  if (!isLoggedIn) {
+  if (!config.debug) isLoggedIn = Boolean(currentUser)
+  if (!isLoggedIn && currentUser) {
     if (isUndefined(router)) return isLoggedIn
     // redirect if router is defined
     else router.push("login")
   } else return isLoggedIn
 }
 
+export function isVerified(): boolean {
+  if (!config.debug && isLoggedIn()) {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      const emailVerified = currentUser.get("emailVerified")
+      return Boolean(emailVerified)
+    }
+  }
+  return false
+}
+
 /**
  * Check the current loggedin user and returns it
- * @returns {ParseCurrentUserResponse | false} - Returns the Userobject if logged in else returns false
+ * @returns {ParseUser | false} - Returns the Userobject if logged in else returns false
  */
-export function getCurrentUser(): ParseCurrentUserResponse | false {
+export function getCurrentUser(): ParseUser | false {
   if (!config.debug) {
-    const currentUser: ParseCurrentUserResponse = Parse.User.current()
+    const currentUser: ParseUser = Parse.User.current()
     if (currentUser?.id) return currentUser
   }
   return false
