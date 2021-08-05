@@ -1,6 +1,5 @@
 <template>
   <div class="oc-game_site">
-    <Nav />
     <div class="game_content">
       <div class="info_header">
         <div class="user">
