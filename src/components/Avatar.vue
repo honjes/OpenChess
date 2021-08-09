@@ -40,7 +40,6 @@ export default {
       firstExtend: true,
     }
   },
-  data() {},
   computed: {
     textWidth() {
       if (!this.$props.extends || this.extendTextWidth === 0) return "auto"
