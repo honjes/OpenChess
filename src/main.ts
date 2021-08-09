@@ -10,6 +10,7 @@ import {
   getCurrentUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
+  isLoggedIn,
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
@@ -61,23 +62,30 @@ export interface StoreInterface {
   }
 }
 
+function getCurrentUserObject() {
+  let returnUser = { id: "", username: "", color: "", email: "" }
+  const isLoggedIn = parseIsLoggedIn()
+
+  if (isLoggedIn) {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      returnUser = {
+        id: currentUser.id,
+        username: currentUser.getUsername(),
+        color: String(currentUser.get("color")),
+        email: String(currentUser.get("email")),
+      }
+    }
+  }
+  return returnUser
+}
+
 initaliseParse()
 const store = createStore({
   state(): StoreInterface {
-    const isLoggedIn = parseIsLoggedIn()
+    const isLoggedIn = parseIsLoggedIn(router)
     const parseObjects = getParseObjects()
-    let parseUser = { id: "", username: "", color: "", email: "" }
-    if (isLoggedIn) {
-      const currentUser = getCurrentUser()
-      if (currentUser) {
-        parseUser = {
-          id: currentUser.id,
-          username: currentUser.getUsername(),
-          color: String(currentUser.get("color")),
-          email: String(currentUser.get("email")),
-        }
-      }
-    }
+    let parseUser = getCurrentUserObject()
 
     return {
       isLoggedIn,
@@ -95,13 +103,11 @@ const store = createStore({
      * and sets the current userId if user is Logged in
      */
     changeLoginState(state: StoreInterface) {
-      const { isLoggedIn } = state
-      const currentUser = getCurrentUser()
-      state.isLoggedIn = !isLoggedIn
+      const isLoggedIn = parseIsLoggedIn()
+      state.isLoggedIn = isLoggedIn
 
-      // If user is now logged in set current user.id
-      if (currentUser !== false) state.user.id = currentUser.id
-      else state.user.id = ""
+      // If user is now logged in set currentUserObject
+      if (isLoggedIn) state.user = getCurrentUserObject()
     },
     refreshWindowSize(state: StoreInterface) {
       state.windowWith = window.innerWidth
