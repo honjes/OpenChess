@@ -11,6 +11,7 @@ import {
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
   isLoggedIn,
+  emailIsVerified,
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
@@ -47,12 +48,7 @@ const router = createRouter({
 
 export interface StoreInterface {
   isLoggedIn: boolean
-  user: {
-    id: string
-    username: string
-    color: string
-    email: string
-  }
+  user: StoreCurrentUserInterface
   parseObjects: {
     Game: any
   }
@@ -62,8 +58,16 @@ export interface StoreInterface {
   }
 }
 
-function getCurrentUserObject() {
-  let returnUser = { id: "", username: "", color: "", email: "" }
+export interface StoreCurrentUserInterface {
+  id: string
+  username: string
+  color: string
+  email: string
+  emailIsVerified: boolean
+}
+
+function getCurrentUserObject(): StoreCurrentUserInterface {
+  let returnUser = { id: "", username: "", color: "", email: "", emailIsVerified: false }
   const isLoggedIn = parseIsLoggedIn()
 
   if (isLoggedIn) {
@@ -74,9 +78,11 @@ function getCurrentUserObject() {
         username: currentUser.getUsername(),
         color: String(currentUser.get("color")),
         email: String(currentUser.get("email")),
+        emailIsVerified: emailIsVerified(),
       }
     }
   }
+  console.log("returnUser: ", returnUser)
   return returnUser
 }
 
@@ -114,15 +120,7 @@ const store = createStore({
     },
     updateCurrentUser(state: StoreInterface) {
       if (state.isLoggedIn) {
-        const currentUser = getCurrentUser()
-        if (currentUser) {
-          state.user = {
-            id: currentUser.id,
-            username: currentUser.getUsername(),
-            color: String(currentUser.get("color")),
-            email: String(currentUser.get("email")),
-          }
-        }
+        state.user = getCurrentUserObject()
       }
     },
   },
