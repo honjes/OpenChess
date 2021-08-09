@@ -2,6 +2,12 @@
   <div id="oc-user_page">
     <h2>Your Userinformation</h2>
     <div class="user_form">
+      <div class="email_verified">
+        <span v-if="emailIsVerified">Email is Verified</span>
+        <span v-else>Email is not Verified</span>
+        <it-icon v-if="emailIsVerified" box box-color="#3051ff" color="#fff" name="verified_user" />
+        <it-icon v-else box box-color="#3051ff" color="#fff" name="shield" />
+      </div>
       <it-input
         v-model="username"
         label-top="Username"
@@ -44,8 +50,9 @@ export default {
   setup() {
     return {
       username: ref(""),
-      email: ref(""),
       color: ref("#fff"),
+      email: ref(""),
+      emailIsVerified: ref(false),
       error: ref({}),
     }
   },
@@ -53,13 +60,11 @@ export default {
     isLoggedIn(this.$router)
     this.$store.commit("updateCurrentUser")
 
-    const newUsername = this.$store.state.user.username
-    const newEmail = this.$store.state.user.email
-    const newColor = this.$store.state.user.color
-
-    this.username = newUsername
-    this.email = newEmail
-    this.color = newColor
+    this.username = this.$store.state.user.username
+    this.color = this.$store.state.user.color
+    this.email = this.$store.state.user.email
+    this.emailIsVerified = this.$store.state.user.emailIsVerified
+    console.log("this.emailIsVerified: ", this.emailIsVerified)
   },
   methods: {
     inputChange() {
@@ -112,6 +117,10 @@ export default {
   }
   .user_save {
     margin-top: 10px;
+  }
+  .email_verified {
+    display: flex;
+    justify-content: space-between;
   }
 }
 </style>

@@ -2,6 +2,8 @@ import Parse from "parse/dist/parse.min.js"
 import config from "../config"
 import { isString, isUndefined } from "lodash"
 import { Router } from "vue-router"
+import { getItem, setItem } from "./localstorage"
+import moment from "moment"
 
 export interface SingeUpUserData {
   username: string
@@ -140,14 +142,14 @@ export function isLoggedIn(router?: Router): boolean {
 
   // sets isLoggedIn if debug is false
   if (!config.debug) isLoggedIn = Boolean(currentUser)
-  if (!isLoggedIn && currentUser) {
-    if (isUndefined(router)) return isLoggedIn
-    // redirect if router is defined
-    else router.push("login")
-  } else return isLoggedIn
+  // redirect if router is defined and not LoggedIn
+  if (!isLoggedIn && !isUndefined(router)) {
+    router.push("login")
+  }
+  return isLoggedIn
 }
 
-export function isVerified(): boolean {
+export function emailIsVerified(): boolean {
   if (!config.debug && isLoggedIn()) {
     const currentUser = getCurrentUser()
     if (currentUser) {
@@ -272,6 +274,32 @@ export async function callCloudCode(
       return response
     } catch (error) {
       console.error("error: ", error)
+    }
+  }
+  return false
+}
+
+/**
+ * Sends an VerificationEmail to the current user
+ */
+export async function sendVerificationEmail(): Promise<boolean> {
+  if (isLoggedIn() && !config.debug) {
+    const lastEmail = getItem("lastEmailSend")
+    const lastEmailDate = moment(lastEmail)
+    const dateBefore = moment().subtract(config.email_resend_delay_sec, "seconds")
+
+    if (lastEmail === "" || lastEmailDate.isBefore(dateBefore)) {
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        try {
+          const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
+          setItem("lastEmailSend", moment().toString())
+          return true
+        } catch (error) {
+          console.error("error: ", error)
+          return false
+        }
+      }
     }
   }
   return false
