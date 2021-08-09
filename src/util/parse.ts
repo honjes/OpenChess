@@ -142,11 +142,11 @@ export function isLoggedIn(router?: Router): boolean {
 
   // sets isLoggedIn if debug is false
   if (!config.debug) isLoggedIn = Boolean(currentUser)
-  if (!isLoggedIn && currentUser) {
-    if (isUndefined(router)) return isLoggedIn
-    // redirect if router is defined
-    else router.push("login")
-  } else return isLoggedIn
+  // redirect if router is defined and not LoggedIn
+  if (!isLoggedIn && !isUndefined(router)) {
+    router.push("login")
+  }
+  return isLoggedIn
 }
 
 export function isVerified(): boolean {
@@ -282,11 +282,11 @@ export async function callCloudCode(
 /**
  * Sends an VerificationEmail to the current user
  */
-export async function sendVerificationEmail() {
+export async function sendVerificationEmail(): Promise<boolean> {
   if (isLoggedIn() && !config.debug) {
     const lastEmail = getItem("lastEmailSend")
     const lastEmailDate = moment(lastEmail)
-    const dateBefore = moment().subtract(1, "minute")
+    const dateBefore = moment().subtract(config.email_resend_delay_sec, "seconds")
 
     if (lastEmail === "" || lastEmailDate.isBefore(dateBefore)) {
       const currentUser = getCurrentUser()
@@ -294,8 +294,13 @@ export async function sendVerificationEmail() {
         try {
           const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
           setItem("lastEmailSend", moment().toString())
-        } catch (error) {}
+          return true
+        } catch (error) {
+          console.error("error: ", error)
+          return false
+        }
       }
     }
   }
+  return false
 }
