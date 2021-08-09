@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { isVerified, sendVerificationEmail } from "../util/parse"
+import { emailIsVerified, sendVerificationEmail } from "../util/parse"
 import { ref } from "vue"
 import moment from "moment"
 import { getItem } from "../util/localstorage"
@@ -32,7 +32,7 @@ import config from "../config"
 
 export default {
   setup() {
-    const hasNoEmailVerification = !isVerified()
+    const hasNoEmailVerification = !emailIsVerified()
 
     return {
       hasNoEmailVerification: ref(hasNoEmailVerification),

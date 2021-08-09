@@ -149,7 +149,7 @@ export function isLoggedIn(router?: Router): boolean {
   return isLoggedIn
 }
 
-export function isVerified(): boolean {
+export function emailIsVerified(): boolean {
   if (!config.debug && isLoggedIn()) {
     const currentUser = getCurrentUser()
     if (currentUser) {
