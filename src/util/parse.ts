@@ -151,7 +151,7 @@ export function isLoggedIn(router?: Router): boolean {
   if (!config.debug) isLoggedIn = Boolean(currentUser)
   // redirect if router is defined and not LoggedIn
   if (!isLoggedIn && !isUndefined(router)) {
-    router.push("login")
+    router.push("/login")
   }
   return isLoggedIn
 }
