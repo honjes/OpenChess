@@ -22,14 +22,13 @@ export default {
       styleClass: props.class,
       id: props.id,
       gameColor: ref(""),
+      defaultFen: props.defaultFen,
     }
   },
   async data() {
     await this.setupGameConnection()
 
-    return {
-      currentFen: "",
-    }
+    return {}
   },
   methods: {
     onChessMove(ev) {
