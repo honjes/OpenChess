@@ -57,8 +57,13 @@ function createParseGameObject() {
       return this.get("users").filter(val => val.id !== userId)[0]
     },
     isUsersTurn: function (userId: string): boolean {
-      const turn = this.get("turn")
-      return turn === userId || turn === "choose"
+      const history = this.get("moveHistory")
+
+      if (!isUndefined(history) && history.length > 0) {
+      } else return this.get("white") === userId
+    },
+    getUserColor: function (userId: string): string {
+      return this.get("white") === userId ? "white" : "black"
     },
   })
 }
