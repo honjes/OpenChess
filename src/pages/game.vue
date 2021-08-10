@@ -7,40 +7,37 @@
         </div>
         <div class="enemy"></div>
       </div>
-      <div class="game"><Chess /></div>
+      <div class="game"><Chess :id="gameId" :playing="user.id" /></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import Nav from "../components/Nav.vue"
 import Chess from "../components/Chess.vue"
 import { ref } from "vue"
-import { callCloudCode, getGame, isLoggedIn } from "../util/parse"
+import { isLoggedIn } from "../util/parse"
 import Avatar from "../components/Avatar.vue"
+import { useRoute } from "vue-router"
 export default {
   name: "Game",
-  async mounted() {
-    isLoggedIn(this.$router)
-    await this.setupGameConnection()
-  },
-  data() {
+  setup() {
+    const route = useRoute()
+    const paramGameId = route.params.gameId
+
     return {
-      game: ref(),
-      gameId: ref(this.$route.params.gameId),
+      gameId: ref(paramGameId),
     }
   },
-  methods: {
-    async setupGameConnection() {
-      this.game = await getGame(this.gameId)
-      const turn = this.game.get("turn")
-      if (turn === "" || typeof turn !== typeof "string")
-        callCloudCode("setGameStarter", { gameId: this.gameId })
+  mounted() {
+    isLoggedIn(this.$router)
+  },
+  computed: {
+    user() {
+      return this.$store.state.user
     },
   },
   components: {
     Chess,
-    Nav,
     Avatar,
   },
 }
