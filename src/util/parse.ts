@@ -15,6 +15,7 @@ export interface ParseObject {
   id: string
   get?: (varName: string) => string | boolean | ParseObject
   set?: (varName: string, varValue: any) => void
+  add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
   save?: () => void
   [index: string]:
@@ -269,6 +270,23 @@ export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
         console.error("error: ", error)
         return false
       }
+    }
+  }
+  return false
+}
+
+export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user) {
+    game.set("fen", fen)
+    game.add("history", { user: user.id })
+    try {
+      await game.save()
+      return true
+    } catch (error) {
+      console.error("error: ", error)
+      return false
     }
   }
   return false
