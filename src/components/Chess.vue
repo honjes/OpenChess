@@ -2,9 +2,9 @@
   <div class="oc-chess chessGame" :class="styleClass">
     <chessboard
       v-if="gameColor !== ''"
-      :color="gameColor"
       style="margin-top: 20px"
-      :fen="defaultFen"
+      :color="gameColor"
+      :fen="currentFen"
       @onMove="onChessMove"
     />
   </div>
@@ -13,16 +13,19 @@
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
 import { ref } from "vue"
-import { getGame, setWhiteToCurrent } from "../util/parse"
+import { getGame, setWhiteToCurrent, setNewGameFen } from "../util/parse"
 import { isUndefined } from "lodash"
 
 export default {
   setup(props) {
+    const currentFen = props.defaultFen
+
     return {
       styleClass: props.class,
       id: props.id,
       gameColor: ref(""),
-      defaultFen: props.defaultFen,
+      currentFen: currentFen,
+      playing: ref(props.playing),
     }
   },
   async data() {
@@ -32,8 +35,11 @@ export default {
   },
   methods: {
     onChessMove(ev) {
-      let { fen } = ev
-      this.currentFen = String(fen)
+      const { fen } = ev
+      if (fen !== this.currentFen) {
+        this.currentFen = fen
+        setNewGameFen(this.id, fen)
+      }
     },
     async setupGameConnection() {
       if (!isUndefined(this.id) && this.id !== "") {
@@ -42,7 +48,7 @@ export default {
         if (this.game.get("white") === "") {
           await setWhiteToCurrent(this.id)
           newGameColor = "white"
-        } else if (this.game.get("white") === this.currentlyPlaying) newGameColor = "white"
+        } else if (this.game.get("white") === this.playing) newGameColor = "white"
         else newGameColor = "black"
 
         this.gameColor = newGameColor
@@ -61,7 +67,7 @@ export default {
       type: String,
       default: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     },
-    currentlyPlaying: {
+    playing: {
       type: String,
       required: true,
     },

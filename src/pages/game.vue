@@ -33,7 +33,9 @@
           </div>
         </div>
       </div>
-      <div class="game"><Chess v-if="Boolean(game)" :id="gameId" :playing="user.id" /></div>
+      <div class="game">
+        <Chess v-if="Boolean(game)" :defaultFen="game.get('fen')" :id="gameId" :playing="user.id" />
+      </div>
     </div>
   </div>
 </template>
