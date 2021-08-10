@@ -179,6 +179,11 @@ export default {
       return threats
     },
     loadPosition() {
+      let orientation
+
+      if (this.color === "white" || this.color === "black") orientation = this.color
+      else orientation = this.orientation
+
       this.game.load(this.fen)
       this.board = Chessground(this.$refs.board, {
         fen: this.game.fen(),
@@ -187,7 +192,7 @@ export default {
           ...this.getMovable(),
           free: this.free,
         },
-        orientation: this.orientation,
+        orientation: orientation,
       })
       this.board.set({
         movable: { events: { after: this.changeTurn() } },
