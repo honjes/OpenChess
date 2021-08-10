@@ -82,7 +82,6 @@ function getCurrentUserObject(): StoreCurrentUserInterface {
       }
     }
   }
-  console.log("returnUser: ", returnUser)
   return returnUser
 }
 

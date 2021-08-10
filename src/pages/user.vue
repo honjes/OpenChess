@@ -64,7 +64,6 @@ export default {
     this.color = this.$store.state.user.color
     this.email = this.$store.state.user.email
     this.emailIsVerified = this.$store.state.user.emailIsVerified
-    console.log("this.emailIsVerified: ", this.emailIsVerified)
   },
   methods: {
     inputChange() {
