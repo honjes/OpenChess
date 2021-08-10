@@ -15,6 +15,7 @@ export interface ParseObject {
   id: string
   get?: (varName: string) => string | boolean | ParseObject
   set?: (varName: string, varValue: any) => void
+  relation?: (relationName: string) => any
   save?: () => void
   [index: string]:
     | string
@@ -230,15 +231,39 @@ export async function getGame(
 ): Promise<ParseGame | false | ParseGame[]> {
   if (isLoggedIn()) {
     if (isString(connection)) {
-      const response = await parseQuery(createParseGameObject(), {
+      const queryResponse = await parseQuery(createParseGameObject(), {
         objectId: String(connection),
       })
-      return response[0]
+      const responseObject = queryResponse[0]
+
+      return responseObject
     } else {
       const response = await parseQuery(createParseGameObject(), {
         users: connection,
       })
       return response
+    }
+  }
+  return false
+}
+
+export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user) {
+    const isStarted = game.get("started")
+    console.timeLog("isStarted: ", isStarted)
+    if (!isStarted) {
+      game.set("white", user.id)
+      game.set("started", true)
+
+      try {
+        await game.save()
+        return true
+      } catch (error) {
+        console.error("error: ", error)
+        return false
+      }
     }
   }
   return false
