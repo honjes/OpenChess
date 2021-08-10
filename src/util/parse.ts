@@ -61,6 +61,8 @@ function createParseGameObject() {
       const history = this.get("moveHistory")
 
       if (!isUndefined(history) && history.length > 0) {
+        const lastMove = history[history.length - 1]
+        return lastMove.user !== userId
       } else return this.get("white") === userId
     },
     getUserColor: function (userId: string): string {
