@@ -12,8 +12,8 @@
 
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
-import { ref } from "vue"
-import { getGame, setWhiteToCurrent, setNewGameFen } from "../util/parse"
+import { onUnmounted, ref } from "vue"
+import { getGame, setWhiteToCurrent, setNewGameFen, getGameSubscription } from "../util/parse"
 import { isUndefined } from "lodash"
 
 export default {
@@ -28,12 +28,24 @@ export default {
       playing: ref(props.playing),
     }
   },
+  async mounted() {
+    this.subscription = await getGameSubscription(this.id)
+    if (!isUndefined(this.subscription) && this.subscription !== false)
+      this.subscription.on("update", this.gameUpdateHandler)
+  },
+  onUnmounted() {
+    this.subscription.unsubscribe()
+  },
   async data() {
     await this.setupGameConnection()
 
     return {}
   },
   methods: {
+    gameUpdateHandler(object) {
+      console.log("gameUpdateHandler")
+      console.log("object: ", object)
+    },
     onChessMove(ev) {
       const { fen } = ev
       if (fen !== this.currentFen) {

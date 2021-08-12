@@ -42,6 +42,7 @@ export function initaliseParse(): boolean {
     try {
       Parse.initialize(config.back4app_applicationId, config.back4app_javascriptKey)
       Parse.serverURL = config.back4app_url
+      Parse.liveQueryServerURL = config.back4app_livequeryurl
       Parse.secret = config.parse_secret
       Parse.enableEncryptedUser()
       return true
@@ -353,4 +354,19 @@ export async function sendVerificationEmail(): Promise<boolean> {
     }
   }
   return false
+}
+
+// Subscriptions
+export async function getGameSubscription(gameId: string): Promise<false | any> {
+  try {
+    const query = new Parse.Query("Game")
+    query.equalTo("objectid", gameId)
+    console.log("getGameSubscription")
+    // const subscription = await query.subscribe()
+    return subscription
+  } catch (error) {
+    console.error("error: ", error)
+
+    return false
+  }
 }
