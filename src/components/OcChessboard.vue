@@ -8,9 +8,9 @@
 import { Chess } from "chess.js"
 import { Chessground } from "chessground"
 import { uniques } from "../util/chessboard"
+import { getGameSubscription } from "../util/parse"
 import { isUndefined } from "lodash"
 import { ref } from "vue"
-import config from "../config"
 
 export default {
   name: "chessboard",
@@ -35,12 +35,17 @@ export default {
       type: String,
       default: "white",
     },
+    // Custom Params
+    color: {
+      type: String,
+      default: "",
+    },
+    gameId: {
+      type: String,
+      requried: true,
+    },
   },
   watch: {
-    fen(newFen) {
-      this.fen = newFen
-      this.loadPosition()
-    },
     orientation(orientation) {
       this.orientation = orientation
       this.loadPosition()
@@ -129,22 +134,23 @@ export default {
           fen: this.game.fen(),
           turnColor: this.toColor(),
           movable: {
-            color: this.toColor(),
-            dests: this.possibleMoves(),
+            ...this.getMovable(),
           },
         })
         this.calculatePromotions()
         this.afterMove()
       }
     },
-    afterMove() {
+    afterMove(emit = true) {
       if (this.showThreats) {
         this.paintThreats()
       }
-      let threats = this.countThreats(this.toColor()) || {}
-      threats["history"] = this.game.history()
-      threats["fen"] = this.game.fen()
-      this.$emit("onMove", threats)
+      if (emit) {
+        let threats = this.countThreats(this.toColor()) || {}
+        threats["history"] = this.game.history()
+        threats["fen"] = this.game.fen()
+        this.$emit("onMove", threats)
+      }
     },
     countThreats(color) {
       let threats = {}
@@ -174,25 +180,53 @@ export default {
       threats[`turn`] = color
       return threats
     },
-    loadPosition() {
+    loadPosition(emit = true) {
+      let orientation
+
+      if (this.color === "white" || this.color === "black") orientation = this.color
+      else orientation = this.orientation
+
       this.game.load(this.fen)
       this.board = Chessground(this.$refs.board, {
         fen: this.game.fen(),
         turnColor: this.toColor(),
         movable: {
-          color: this.toColor(),
+          ...this.getMovable(),
           free: this.free,
-          dests: this.possibleMoves(),
         },
-        orientation: this.orientation,
+        orientation: orientation,
       })
       this.board.set({
         movable: { events: { after: this.changeTurn() } },
       })
-      this.afterMove()
+      this.afterMove(emit)
+    },
+    // Custom Functions
+    getMovable() {
+      const currentColor = isUndefined(this.toColor()) ? "" : this.toColor()
+      let returnOb = {}
+
+      if (currentColor !== "") {
+        if (currentColor !== this.color) {
+          return returnOb
+        }
+      }
+      returnOb = {
+        color: currentColor,
+        dests: this.possibleMoves(),
+      }
+
+      return returnOb
+    },
+    gameUpdateHandler(object) {
+      const newFen = object.get("fen")
+
+      this.fen = newFen
+      this.loadPosition(false)
+      this.$emit("onEnemyMove")
     },
   },
-  setup() {
+  setup(props) {
     return {
       windowWith: ref(0),
       gameWidth: ref("700px"),
@@ -200,9 +234,16 @@ export default {
       board: null,
       promotions: [],
       promoteTo: "q",
+      color: ref(props.color),
+      gameId: ref(props.gameId),
     }
   },
-  mounted() {
+  data() {
+    return {
+      fen: this.$props.fen,
+    }
+  },
+  async mounted() {
     this.loadPosition()
 
     const windowWithListener = this.$store.subscribe((mutation, state) => {
@@ -212,9 +253,18 @@ export default {
     })
     this.setGameWidth()
 
+    // Setup Subscription to update when Game Object updates
+    this.subscription = await getGameSubscription(this.gameId)
+    if (!isUndefined(this.subscription) && this.subscription !== false)
+      this.subscription.on("update", this.gameUpdateHandler)
+
     return {
       windowWithListener,
     }
   },
+  onBeforeUnmount() {
+    this.subscription.unsubscribe()
+  },
+  emits: ["onMove", "onEnemyMove"],
 }
 </script>

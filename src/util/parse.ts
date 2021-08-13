@@ -15,6 +15,8 @@ export interface ParseObject {
   id: string
   get?: (varName: string) => string | boolean | ParseObject
   set?: (varName: string, varValue: any) => void
+  add?: (varName: string, varValue: any) => void
+  relation?: (relationName: string) => any
   save?: () => void
   [index: string]:
     | string
@@ -40,6 +42,7 @@ export function initaliseParse(): boolean {
     try {
       Parse.initialize(config.back4app_applicationId, config.back4app_javascriptKey)
       Parse.serverURL = config.back4app_url
+      Parse.liveQueryServerURL = config.back4app_livequeryurl
       Parse.secret = config.parse_secret
       Parse.enableEncryptedUser()
       return true
@@ -53,11 +56,27 @@ export function initaliseParse(): boolean {
 function createParseGameObject() {
   return Parse.Object.extend("Game", {
     getEnemy: function (userId: string): any {
-      return this.get("users").filter(val => val.id !== userId)[0]
+      const enemy = this.get("users").filter(val => val.id !== userId)[0]
+
+      return enemy
     },
     isUsersTurn: function (userId: string): boolean {
-      const turn = this.get("turn")
-      return turn === userId || turn === "choose"
+      const lastMoveUser = this.get("lastMove")
+
+      if (!isUndefined(lastMoveUser)) {
+        return lastMoveUser !== userId
+      } else {
+        const history = this.get("moveHistory")
+
+        if (!isUndefined(history) && history.length > 0) {
+          const lastMove = history[history.length - 1]
+
+          return lastMove.user !== userId
+        } else return this.get("white") === userId
+      }
+    },
+    getUserColor: function (userId: string): string {
+      return this.get("white") === userId ? "white" : "black"
     },
   })
 }
@@ -144,7 +163,7 @@ export function isLoggedIn(router?: Router): boolean {
   if (!config.debug) isLoggedIn = Boolean(currentUser)
   // redirect if router is defined and not LoggedIn
   if (!isLoggedIn && !isUndefined(router)) {
-    router.push("login")
+    router.push("/login")
   }
   return isLoggedIn
 }
@@ -230,15 +249,56 @@ export async function getGame(
 ): Promise<ParseGame | false | ParseGame[]> {
   if (isLoggedIn()) {
     if (isString(connection)) {
-      const response = await parseQuery(createParseGameObject(), {
+      const queryResponse = await parseQuery(createParseGameObject(), {
         objectId: String(connection),
       })
-      return response[0]
+      const responseObject = queryResponse[0]
+
+      return responseObject
     } else {
       const response = await parseQuery(createParseGameObject(), {
         users: connection,
       })
       return response
+    }
+  }
+  return false
+}
+
+export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user) {
+    const isStarted = game.get("started")
+    if (!isStarted) {
+      game.set("white", user.id)
+      game.set("started", true)
+
+      try {
+        await game.save()
+        return true
+      } catch (error) {
+        console.error("error: ", error)
+        return false
+      }
+    }
+  }
+  return false
+}
+
+export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user && game.get("lastMove") !== user.id) {
+    game.set("fen", fen)
+    game.add("moveHistory", { user: user.id })
+    game.set("lastMove", user.id)
+    try {
+      await game.save()
+      return true
+    } catch (error) {
+      console.error("error: ", error)
+      return false
     }
   }
   return false
@@ -303,4 +363,18 @@ export async function sendVerificationEmail(): Promise<boolean> {
     }
   }
   return false
+}
+
+// Subscriptions
+export async function getGameSubscription(gameId: string): Promise<false | any> {
+  try {
+    const query = new Parse.Query("Game")
+    query.equalTo("objectId", gameId)
+    const subscription = await query.subscribe()
+    return subscription
+  } catch (error) {
+    console.error("error: ", error)
+
+    return false
+  }
 }
