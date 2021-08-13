@@ -1,5 +1,5 @@
 <template>
-  <div id="oc-login_site" class="container">
+  <div id="oc-login_site" class="container" @keydown.enter="loginEnterPress">
     <div v-if="showSignUpForm">
       <h3>Create User Account</h3>
       <div class="form">
@@ -100,6 +100,10 @@ export default {
     },
     redirectTo(page = "home") {
       this.$router.push({ name: page })
+    },
+    loginEnterPress() {
+      if (this.showSignUpForm) this.registerUser()
+      else this.clickLoginUser()
     },
     // Imported Functions
     // Parse Functions
