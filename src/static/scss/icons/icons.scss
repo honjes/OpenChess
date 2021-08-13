@@ -1,0 +1,13 @@
+.oc-icon-king_white,
+.oc-icon-king_black {
+  display: block;
+  background: no-repeat center/100%;
+  width: 64px;
+  height: 64px;
+  &.oc-icon-king_white {
+    background-image: url("./icons/king_crown_white.svg");
+  }
+  &.oc-icon-king_black {
+    background-image: url("./icons/king_crown_black.svg");
+  }
+}

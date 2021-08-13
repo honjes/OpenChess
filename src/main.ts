@@ -7,9 +7,11 @@ import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
 import {
   getParseObjects,
-  getUser,
+  getCurrentUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
+  isLoggedIn,
+  emailIsVerified,
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
@@ -17,6 +19,10 @@ import config from "./config"
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: "/:pathMatch(.*)*",
+      redirect: "/",
+    },
     {
       path: "/",
       name: "home",
@@ -28,6 +34,11 @@ const router = createRouter({
       component: defineAsyncComponent(() => import("./pages/login.vue")),
     },
     {
+      path: "/user",
+      name: "user",
+      component: defineAsyncComponent(() => import("./pages/user.vue")),
+    },
+    {
       path: "/game/:gameId",
       name: "game",
       component: defineAsyncComponent(() => import("./pages/game.vue")),
@@ -37,10 +48,7 @@ const router = createRouter({
 
 export interface StoreInterface {
   isLoggedIn: boolean
-  user: {
-    id: string
-    username: string
-  }
+  user: StoreCurrentUserInterface
   parseObjects: {
     Game: any
   }
@@ -50,19 +58,43 @@ export interface StoreInterface {
   }
 }
 
+export interface StoreCurrentUserInterface {
+  id: string
+  username: string
+  color: string
+  email: string
+  emailIsVerified: boolean
+}
+
+function getCurrentUserObject(): StoreCurrentUserInterface {
+  let returnUser = { id: "", username: "", color: "", email: "", emailIsVerified: false }
+  const isLoggedIn = parseIsLoggedIn()
+
+  if (isLoggedIn) {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      returnUser = {
+        id: currentUser.id,
+        username: currentUser.getUsername(),
+        color: String(currentUser.get("color")),
+        email: String(currentUser.get("email")),
+        emailIsVerified: emailIsVerified(),
+      }
+    }
+  }
+  return returnUser
+}
+
 initaliseParse()
 const store = createStore({
   state(): StoreInterface {
-    const isLoggedIn = parseIsLoggedIn()
+    const isLoggedIn = parseIsLoggedIn(router)
     const parseObjects = getParseObjects()
-    const parseUser = getUser()
+    let parseUser = getCurrentUserObject()
 
     return {
       isLoggedIn,
-      user: {
-        id: isLoggedIn ? parseUser.id : "",
-        username: isLoggedIn ? parseUser.getUsername() : "",
-      },
+      user: parseUser,
       parseObjects,
       windowWith: window.innerWidth,
       config: {
@@ -76,15 +108,19 @@ const store = createStore({
      * and sets the current userId if user is Logged in
      */
     changeLoginState(state: StoreInterface) {
-      const { isLoggedIn } = state
-      state.isLoggedIn = !isLoggedIn
+      const isLoggedIn = parseIsLoggedIn()
+      state.isLoggedIn = isLoggedIn
 
-      // If user is now logged in set current user.id
-      if (isLoggedIn) state.user.id = getUser().id
-      else state.user.id = ""
+      // If user is now logged in set currentUserObject
+      if (isLoggedIn) state.user = getCurrentUserObject()
     },
-    refreshWindowSize(state) {
+    refreshWindowSize(state: StoreInterface) {
       state.windowWith = window.innerWidth
+    },
+    updateCurrentUser(state: StoreInterface) {
+      if (state.isLoggedIn) {
+        state.user = getCurrentUserObject()
+      }
     },
   },
 })

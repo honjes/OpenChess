@@ -1,5 +1,9 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
+import { isString, isUndefined } from "lodash"
+import { Router } from "vue-router"
+import { getItem, setItem } from "./localstorage"
+import moment from "moment"
 
 export interface SingeUpUserData {
   username: string
@@ -7,9 +11,27 @@ export interface SingeUpUserData {
   email: string
 }
 
-export interface ParseCurrentUserResponse {
+export interface ParseObject {
   id: string
-  [index: string]: string | number | undefined
+  get?: (varName: string) => string | boolean | ParseObject
+  set?: (varName: string, varValue: any) => void
+  add?: (varName: string, varValue: any) => void
+  relation?: (relationName: string) => any
+  save?: () => void
+  [index: string]:
+    | string
+    | number
+    | undefined
+    | ((index?: string, index2?: any) => void | string | boolean | ParseObject)
+}
+
+export interface ParseUser extends ParseObject {
+  getUsername?: () => string
+}
+
+export interface ParseGame extends ParseObject {
+  getEnemy?: (id: string) => ParseUser
+  isUsersTurn?: (id: string) => boolean
 }
 
 /**
@@ -18,11 +40,11 @@ export interface ParseCurrentUserResponse {
 export function initaliseParse(): boolean {
   if (!config.debug) {
     try {
-      Parse.initialize(
-        config.back4app_applicationId,
-        config.back4app_javascriptKey
-      )
+      Parse.initialize(config.back4app_applicationId, config.back4app_javascriptKey)
       Parse.serverURL = config.back4app_url
+      Parse.liveQueryServerURL = config.back4app_livequeryurl
+      Parse.secret = config.parse_secret
+      Parse.enableEncryptedUser()
       return true
     } catch (error) {
       console.error(error)
@@ -31,21 +53,48 @@ export function initaliseParse(): boolean {
   return false
 }
 
+function createParseGameObject() {
+  return Parse.Object.extend("Game", {
+    getEnemy: function (userId: string): any {
+      const enemy = this.get("users").filter(val => val.id !== userId)[0]
+
+      return enemy
+    },
+    isUsersTurn: function (userId: string): boolean {
+      const lastMoveUser = this.get("lastMove")
+
+      if (!isUndefined(lastMoveUser)) {
+        return lastMoveUser !== userId
+      } else {
+        const history = this.get("moveHistory")
+
+        if (!isUndefined(history) && history.length > 0) {
+          const lastMove = history[history.length - 1]
+
+          return lastMove.user !== userId
+        } else return this.get("white") === userId
+      }
+    },
+    getUserColor: function (userId: string): string {
+      return this.get("white") === userId ? "white" : "black"
+    },
+  })
+}
+
 /**
  * Creates all Parse Objects needed
  * @returns {} - Returns an object with the extended parse Objects
  */
 export function getParseObjects() {
-  const Game = Parse.Object.extend("Game", {
-    getEnemy: function (userName: string): any {
-      return this.get("users").filter(val => val !== userName)[0]
-    },
-    isUsersTurn: function (userName: string): boolean {
-      return this.get("turn") === userName
-    },
-  })
+  const Game = createParseGameObject()
 
   return { Game: new Game() }
+}
+
+async function setCurrentUser(): Promise<void> {
+  const currentUser = getCurrentUser()
+  if (currentUser && isUndefined(currentUser.get("emailVerified")))
+    await getUserById(currentUser.id)
 }
 
 /**
@@ -61,6 +110,7 @@ export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
 
     try {
       await parseUser.signUp()
+      await setCurrentUser()
       return true
     } catch (error) {
       console.error("error: ", error)
@@ -71,19 +121,17 @@ export async function singeUpUser(userData: SingeUpUserData): Promise<boolean> {
 
 /**
  * Handels the login Process
- * @param username {string} - Username of the User that should be logged in
+ * @param userId {string} - userId of the User that should be logged in
  * @param password {string} - Password of the User
  * @returns {Promise<boolean>} - returns true if successfull signed in els returns false
  */
-export async function loginUser(
-  username: string,
-  password: string
-): Promise<boolean> {
+export async function loginUser(userId: string, password: string): Promise<boolean> {
   if (!config.debug) {
     try {
-      const parseUser = await Parse.User.logIn(username, password, {
+      const parseUser = await Parse.User.logIn(userId, password, {
         usePost: true,
       })
+      await setCurrentUser()
       return true
     } catch (error) {
       console.error("error: ", error)
@@ -104,24 +152,57 @@ export async function logoutUser(): Promise<boolean> {
 
 /**
  * Checks if Parse is currently logged in and returns false if not
- * @returns {boolean} - Returns if there is a User set as boolean
+ * @param router {Router} - if given the function will redirect to the loginpage if not logged in
+ * @returns {boolean} - Returns if there is a User set as boolean. If router is not given
  */
-export function isLoggedIn(): boolean {
-  if (!config.debug) {
-    const curUser = Parse.User.current()
-    return Boolean(curUser)
-  } else return false
+export function isLoggedIn(router?: Router): boolean {
+  let isLoggedIn = false
+  const currentUser = getCurrentUser()
+
+  // sets isLoggedIn if debug is false
+  if (!config.debug) isLoggedIn = Boolean(currentUser)
+  // redirect if router is defined and not LoggedIn
+  if (!isLoggedIn && !isUndefined(router)) {
+    router.push("/login")
+  }
+  return isLoggedIn
+}
+
+export function emailIsVerified(): boolean {
+  if (!config.debug && isLoggedIn()) {
+    const currentUser = getCurrentUser()
+    if (currentUser) {
+      const emailVerified = currentUser.get("emailVerified")
+      return Boolean(emailVerified)
+    }
+  }
+  return false
 }
 
 /**
- * Check the current loggedin user and returns its Id
- * @returns {string} - Returns the UserId if logged in else returns empty string
+ * Check the current loggedin user and returns it
+ * @returns {ParseUser | false} - Returns the Userobject if logged in else returns false
  */
-export function getUser(): any {
+export function getCurrentUser(): ParseUser | false {
   if (!config.debug) {
-    const currentUser: ParseCurrentUserResponse = Parse.User.current()
+    const currentUser: ParseUser = Parse.User.current()
     if (currentUser?.id) return currentUser
   }
+  return false
+}
+
+export async function createGameWithCurrent(enemyName: string): Promise<boolean> {
+  const Game = createParseGameObject()
+  const users = [getCurrentUser(), await getUserByName(enemyName)]
+
+  const gameObject = new Game()
+  gameObject.set("users", users)
+  try {
+    await gameObject.save()
+  } catch (error) {
+    console.error("error:", error)
+  }
+
   return false
 }
 
@@ -134,9 +215,11 @@ export function getUser(): any {
  */
 export async function parseQuery(
   object: any,
-  queryParams?: { [index: string]: string | number }
+  queryParams?: {
+    [index: string]: string | number | ParseUser | ParseGame
+  }
 ): Promise<any | false> {
-  if (!config.debug) {
+  if (!config.debug && isLoggedIn()) {
     try {
       const query = new Parse.Query(object)
 
@@ -153,4 +236,145 @@ export async function parseQuery(
     }
   }
   return false
+}
+
+/**
+ * Returns a specific game or games for a specific user
+ * @param connection {string | ParseUser} - Id of a specific game or userObject to get games for that user
+ */
+export async function getGame(connection: ParseUser): Promise<ParseGame[] | false>
+export async function getGame(connection: string): Promise<ParseGame | false>
+export async function getGame(
+  connection: string | ParseUser
+): Promise<ParseGame | false | ParseGame[]> {
+  if (isLoggedIn()) {
+    if (isString(connection)) {
+      const queryResponse = await parseQuery(createParseGameObject(), {
+        objectId: String(connection),
+      })
+      const responseObject = queryResponse[0]
+
+      return responseObject
+    } else {
+      const response = await parseQuery(createParseGameObject(), {
+        users: connection,
+      })
+      return response
+    }
+  }
+  return false
+}
+
+export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user) {
+    const isStarted = game.get("started")
+    if (!isStarted) {
+      game.set("white", user.id)
+      game.set("started", true)
+
+      try {
+        await game.save()
+        return true
+      } catch (error) {
+        console.error("error: ", error)
+        return false
+      }
+    }
+  }
+  return false
+}
+
+export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+  if (game && user && game.get("lastMove") !== user.id) {
+    game.set("fen", fen)
+    game.add("moveHistory", { user: user.id })
+    game.set("lastMove", user.id)
+    try {
+      await game.save()
+      return true
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
+  }
+  return false
+}
+
+export async function getUserById(userId: string): Promise<ParseGame | false> {
+  if (isLoggedIn()) {
+    const response = await parseQuery(Parse.User, {
+      objectId: userId,
+    })
+    return response[0]
+  }
+  return false
+}
+
+export async function getUserByName(userId: string): Promise<ParseGame | false> {
+  if (isLoggedIn()) {
+    const response = await parseQuery(Parse.User, {
+      userId: userId,
+    })
+    return response[0]
+  }
+  return false
+}
+
+export async function callCloudCode(
+  name: string,
+  params: { [index: string]: string | number }
+): Promise<false | { message: string; value?: any }> {
+  if (isLoggedIn()) {
+    try {
+      const response = await Parse.Cloud.run(name, params)
+      return response
+    } catch (error) {
+      console.error("error: ", error)
+    }
+  }
+  return false
+}
+
+/**
+ * Sends an VerificationEmail to the current user
+ */
+export async function sendVerificationEmail(): Promise<boolean> {
+  if (isLoggedIn() && !config.debug) {
+    const lastEmail = getItem("lastEmailSend")
+    const lastEmailDate = moment(lastEmail)
+    const dateBefore = moment().subtract(config.email_resend_delay_sec, "seconds")
+
+    if (lastEmail === "" || lastEmailDate.isBefore(dateBefore)) {
+      const currentUser = getCurrentUser()
+      if (currentUser) {
+        try {
+          const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
+          setItem("lastEmailSend", moment().toString())
+          return true
+        } catch (error) {
+          console.error("error: ", error)
+          return false
+        }
+      }
+    }
+  }
+  return false
+}
+
+// Subscriptions
+export async function getGameSubscription(gameId: string): Promise<false | any> {
+  try {
+    const query = new Parse.Query("Game")
+    query.equalTo("objectId", gameId)
+    const subscription = await query.subscribe()
+    return subscription
+  } catch (error) {
+    console.error("error: ", error)
+
+    return false
+  }
 }
