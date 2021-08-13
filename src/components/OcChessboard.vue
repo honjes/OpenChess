@@ -11,7 +11,6 @@ import { uniques } from "../util/chessboard"
 import { getGameSubscription } from "../util/parse"
 import { isUndefined } from "lodash"
 import { ref } from "vue"
-import config from "../config"
 
 export default {
   name: "chessboard",
