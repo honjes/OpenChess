@@ -1,6 +1,6 @@
 <template>
   <div class="oc-current_games">
-    <div v-if="debug">debug: {{ userGames }}</div>
+    <p style="margin: 10px 0">Current Games:</p>
     <div v-if="userGames.length > 0">
       <div
         v-for="game in userGames"
@@ -8,6 +8,9 @@
         class="single_game oc-clickable oc-hover"
         @click="toGamePage(game.id)"
       >
+        <it-tag class="turn_tag" type="warning" v-if="game.isUsersTurn(storeUser.username)">
+          Your Turn
+        </it-tag>
         <span class="oc-disabled" style="margin-right: 10px">vs</span>
         <span v-if="game && getEnemyName(game.getEnemy(currentUser.id).id) !== ''">
           <Avatar
@@ -17,7 +20,6 @@
             :text="getEnemyName(game.getEnemy(currentUser.id).id)"
           />
         </span>
-        <it-tag type="warning" v-if="game.isUsersTurn(storeUser.username)"> Your Turn </it-tag>
       </div>
     </div>
     <div v-else>No games Found</div>
@@ -106,6 +108,10 @@ export default {
     justify-content: center;
     align-items: center;
     padding: 7px 0;
+
+    .turn_tag {
+      margin-right: 10px;
+    }
   }
 }
 </style>
