@@ -1,6 +1,6 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
-import { isString, isUndefined } from "lodash"
+import _, { isString, isUndefined, difference } from "lodash"
 import { Router } from "vue-router"
 import { getItem, setItem } from "./localstorage"
 import moment from "moment"
@@ -13,16 +13,12 @@ export interface SingeUpUserData {
 
 export interface ParseObject {
   id: string
-  get?: (varName: string) => string | boolean | ParseObject
+  get?: (varName: string) => any | any[]
   set?: (varName: string, varValue: any) => void
   add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
   save?: () => void
-  [index: string]:
-    | string
-    | number
-    | undefined
-    | ((index?: string, index2?: any) => void | string | boolean | ParseObject)
+  [index: string]: string | number | undefined | ((index?: string, index2?: any) => any)
 }
 
 export interface ParseUser extends ParseObject {
@@ -221,6 +217,7 @@ export async function parseQuery(
 ): Promise<any | false> {
   if (!config.debug && isLoggedIn()) {
     try {
+      // check if object is User
       const query = new Parse.Query(object)
 
       // Adding queryParameters
@@ -314,10 +311,10 @@ export async function getUserById(userId: string): Promise<ParseGame | false> {
   return false
 }
 
-export async function getUserByName(userId: string): Promise<ParseGame | false> {
+export async function getUserByName(username: string): Promise<ParseGame | false> {
   if (isLoggedIn()) {
     const response = await parseQuery(Parse.User, {
-      userId: userId,
+      username: username,
     })
     return response[0]
   }
@@ -359,6 +356,86 @@ export async function sendVerificationEmail(): Promise<boolean> {
           console.error("error: ", error)
           return false
         }
+      }
+    }
+  }
+  return false
+}
+
+export async function sendFriendRequest(friendName: string): Promise<boolean> {
+  const current = getCurrentUser()
+  const newFriend = await getUserByName(friendName)
+  console.log("current: ", current)
+  console.log("friendName: ", friendName)
+  console.log("newFriend: ", newFriend)
+
+  if (current && newFriend) {
+    const friendsRel = current.relation("friends")
+    friendsRel.add(newFriend)
+    console.log("newFriend: ", newFriend)
+
+    try {
+      await current.save()
+      return true
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  return false
+}
+
+export async function getFriends(userId: string): Promise<false | ParseUser[]> {
+  const user = await getUserById(userId)
+
+  if (user) {
+    const friendRel = user.relation("friends")
+    try {
+      const friendQuery = await friendRel.query()
+      const currentFriends = await friendQuery.find()
+      return currentFriends
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
+  }
+
+  return false
+}
+
+export async function currentFriendRequests(): Promise<false | ParseUser[]> {
+  const current = getCurrentUser()
+  const query = new Parse.Query(Parse.User)
+  const friendQuery = new Parse.Query(Parse.User)
+
+  if (current) {
+    const currentFriends = await getFriends(current.id)
+
+    if (currentFriends) {
+      console.log("currentFriends: ", currentFriends)
+      // applie filter to Querys
+      friendQuery.equalTo("objectId", current.id)
+      query.matchesQuery("friends", friendQuery)
+      try {
+        let friendRequests = await query.find()
+        // const friendIds = friendRequests.
+        const removedFriends = _.remove(friendRequests, value => {
+          const currUserId = value.id
+          var returnValue = false
+
+          currentFriends.map(friend => {
+            if (friend.id === currUserId) returnValue = true
+            return false
+          })
+
+          return returnValue
+        })
+        console.log("removedFriends: ", removedFriends)
+        console.log("friendRequests: ", friendRequests)
+
+        return []
+      } catch (error) {
+        console.error("error: ", error)
+        return false
       }
     }
   }
