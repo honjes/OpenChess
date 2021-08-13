@@ -64,10 +64,18 @@ export interface StoreCurrentUserInterface {
   color: string
   email: string
   emailIsVerified: boolean
+  friends: any[]
 }
 
 function getCurrentUserObject(): StoreCurrentUserInterface {
-  let returnUser = { id: "", username: "", color: "", email: "", emailIsVerified: false }
+  let returnUser: StoreCurrentUserInterface = {
+    id: "",
+    username: "",
+    color: "",
+    email: "",
+    emailIsVerified: false,
+    friends: [],
+  }
   const isLoggedIn = parseIsLoggedIn()
 
   if (isLoggedIn) {
@@ -78,6 +86,7 @@ function getCurrentUserObject(): StoreCurrentUserInterface {
         username: currentUser.getUsername(),
         color: String(currentUser.get("color")),
         email: String(currentUser.get("email")),
+        friends: currentUser.get("friends"),
         emailIsVerified: emailIsVerified(),
       }
     }
