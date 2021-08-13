@@ -8,6 +8,7 @@
 import { Chess } from "chess.js"
 import { Chessground } from "chessground"
 import { uniques } from "../util/chessboard"
+import { getGameSubscription } from "../util/parse"
 import { isUndefined } from "lodash"
 import { ref } from "vue"
 import config from "../config"
@@ -40,12 +41,12 @@ export default {
       type: String,
       default: "",
     },
+    gameId: {
+      type: String,
+      requried: true,
+    },
   },
   watch: {
-    fen(newFen) {
-      this.fen = newFen
-      this.loadPosition()
-    },
     orientation(orientation) {
       this.orientation = orientation
       this.loadPosition()
@@ -141,14 +142,16 @@ export default {
         this.afterMove()
       }
     },
-    afterMove() {
+    afterMove(emit = true) {
       if (this.showThreats) {
         this.paintThreats()
       }
-      let threats = this.countThreats(this.toColor()) || {}
-      threats["history"] = this.game.history()
-      threats["fen"] = this.game.fen()
-      this.$emit("onMove", threats)
+      if (emit) {
+        let threats = this.countThreats(this.toColor()) || {}
+        threats["history"] = this.game.history()
+        threats["fen"] = this.game.fen()
+        this.$emit("onMove", threats)
+      }
     },
     countThreats(color) {
       let threats = {}
@@ -178,7 +181,7 @@ export default {
       threats[`turn`] = color
       return threats
     },
-    loadPosition() {
+    loadPosition(emit = true) {
       let orientation
 
       if (this.color === "white" || this.color === "black") orientation = this.color
@@ -197,7 +200,7 @@ export default {
       this.board.set({
         movable: { events: { after: this.changeTurn() } },
       })
-      this.afterMove()
+      this.afterMove(emit)
     },
     // Custom Functions
     getMovable() {
@@ -216,6 +219,13 @@ export default {
 
       return returnOb
     },
+    gameUpdateHandler(object) {
+      const newFen = object.get("fen")
+
+      this.fen = newFen
+      this.loadPosition(false)
+      this.$emit("onEnemyMove")
+    },
   },
   setup(props) {
     return {
@@ -226,9 +236,15 @@ export default {
       promotions: [],
       promoteTo: "q",
       color: ref(props.color),
+      gameId: ref(props.gameId),
     }
   },
-  mounted() {
+  data() {
+    return {
+      fen: this.$props.fen,
+    }
+  },
+  async mounted() {
     this.loadPosition()
 
     const windowWithListener = this.$store.subscribe((mutation, state) => {
@@ -238,10 +254,18 @@ export default {
     })
     this.setGameWidth()
 
+    // Setup Subscription to update when Game Object updates
+    this.subscription = await getGameSubscription(this.gameId)
+    if (!isUndefined(this.subscription) && this.subscription !== false)
+      this.subscription.on("update", this.gameUpdateHandler)
+
     return {
       windowWithListener,
     }
   },
-  emits: ["onMove"],
+  onBeforeUnmount() {
+    this.subscription.unsubscribe()
+  },
+  emits: ["onMove", "onEnemyMove"],
 }
 </script>

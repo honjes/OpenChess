@@ -56,15 +56,24 @@ export function initaliseParse(): boolean {
 function createParseGameObject() {
   return Parse.Object.extend("Game", {
     getEnemy: function (userId: string): any {
-      return this.get("users").filter(val => val.id !== userId)[0]
+      const enemy = this.get("users").filter(val => val.id !== userId)[0]
+
+      return enemy
     },
     isUsersTurn: function (userId: string): boolean {
-      const history = this.get("moveHistory")
+      const lastMoveUser = this.get("lastMove")
 
-      if (!isUndefined(history) && history.length > 0) {
-        const lastMove = history[history.length - 1]
-        return lastMove.user !== userId
-      } else return this.get("white") === userId
+      if (!isUndefined(lastMoveUser)) {
+        return lastMoveUser !== userId
+      } else {
+        const history = this.get("moveHistory")
+
+        if (!isUndefined(history) && history.length > 0) {
+          const lastMove = history[history.length - 1]
+
+          return lastMove.user !== userId
+        } else return this.get("white") === userId
+      }
     },
     getUserColor: function (userId: string): string {
       return this.get("white") === userId ? "white" : "black"
@@ -261,7 +270,6 @@ export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
   const user = getCurrentUser()
   if (game && user) {
     const isStarted = game.get("started")
-    console.timeLog("isStarted: ", isStarted)
     if (!isStarted) {
       game.set("white", user.id)
       game.set("started", true)
@@ -281,9 +289,10 @@ export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
 export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
   const game = await getGame(gameId)
   const user = getCurrentUser()
-  if (game && user) {
+  if (game && user && game.get("lastMove") !== user.id) {
     game.set("fen", fen)
-    game.add("history", { user: user.id })
+    game.add("moveHistory", { user: user.id })
+    game.set("lastMove", user.id)
     try {
       await game.save()
       return true
@@ -360,9 +369,8 @@ export async function sendVerificationEmail(): Promise<boolean> {
 export async function getGameSubscription(gameId: string): Promise<false | any> {
   try {
     const query = new Parse.Query("Game")
-    query.equalTo("objectid", gameId)
-    console.log("getGameSubscription")
-    // const subscription = await query.subscribe()
+    query.equalTo("objectId", gameId)
+    const subscription = await query.subscribe()
     return subscription
   } catch (error) {
     console.error("error: ", error)

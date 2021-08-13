@@ -3,16 +3,18 @@
     <chessboard
       v-if="gameColor !== ''"
       style="margin-top: 20px"
+      :gameId="id"
       :color="gameColor"
       :fen="currentFen"
       @onMove="onChessMove"
+      @onEnemyMove="onEnemyMove"
     />
   </div>
 </template>
 
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
-import { onUnmounted, ref } from "vue"
+import { ref } from "vue"
 import { getGame, setWhiteToCurrent, setNewGameFen, getGameSubscription } from "../util/parse"
 import { isUndefined } from "lodash"
 
@@ -24,17 +26,9 @@ export default {
       styleClass: props.class,
       id: props.id,
       gameColor: ref(""),
-      currentFen: currentFen,
+      currentFen: ref(currentFen),
       playing: ref(props.playing),
     }
-  },
-  async mounted() {
-    this.subscription = await getGameSubscription(this.id)
-    if (!isUndefined(this.subscription) && this.subscription !== false)
-      this.subscription.on("update", this.gameUpdateHandler)
-  },
-  onUnmounted() {
-    this.subscription.unsubscribe()
   },
   async data() {
     await this.setupGameConnection()
@@ -42,15 +36,14 @@ export default {
     return {}
   },
   methods: {
-    gameUpdateHandler(object) {
-      console.log("gameUpdateHandler")
-      console.log("object: ", object)
+    onEnemyMove() {
+      this.$emit("onEnemyMove")
     },
-    onChessMove(ev) {
+    async onChessMove(ev) {
       const { fen } = ev
       if (fen !== this.currentFen) {
         this.currentFen = fen
-        setNewGameFen(this.id, fen)
+        await setNewGameFen(this.id, fen)
       }
     },
     async setupGameConnection() {

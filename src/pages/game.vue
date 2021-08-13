@@ -17,7 +17,7 @@
           </div>
           <it-divider vertical style="height: 70px; width: 3px; margin: 0 30px" />
           <div class="enemy">
-            <div><it-tag v-if="game.isUsersTurn(game.getEnemy(user.id).id)">Turn</it-tag></div>
+            <div><it-tag v-if="game.isUsersTurn(enemy.id)">Turn</it-tag></div>
             <span
               :class="{
                 'oc-icon-king_white': game.getUserColor(game.getEnemy(user.id).id) === 'white',
@@ -34,7 +34,13 @@
         </div>
       </div>
       <div class="game">
-        <Chess v-if="Boolean(game)" :defaultFen="game.get('fen')" :id="gameId" :playing="user.id" />
+        <Chess
+          v-if="Boolean(game)"
+          :defaultFen="game.get('fen')"
+          :id="game.id"
+          :playing="user.id"
+          @onEnemyMove="onEnemyMove"
+        />
       </div>
     </div>
   </div>
@@ -60,10 +66,10 @@ export default {
   },
   async mounted() {
     isLoggedIn(this.$router)
-    await this.initGame()
+    await this.loadGame()
   },
   methods: {
-    async initGame() {
+    async loadGame() {
       const game = await getGame(String(this.gameId))
 
       // when game is set get Enemy
@@ -73,6 +79,9 @@ export default {
         this.enemy = enemy
       }
       this.game = game
+    },
+    async onEnemyMove() {
+      await this.loadGame()
     },
   },
   computed: {
