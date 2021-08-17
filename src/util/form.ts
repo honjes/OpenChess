@@ -36,7 +36,8 @@ export function passwordCheck(password: string): true | FormCheckError {
 }
 
 export function setError(errorObject: ErrorObject, newError: FormCheckError): ErrorObject {
-  errorObject[newError.field] = newError.message
+  if (newError.field !== "")
+    errorObject[String(newError.field)] = newError.message
   return errorObject
 }
 
