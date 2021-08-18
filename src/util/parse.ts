@@ -1,9 +1,10 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
-import _, { isString, isUndefined, difference } from "lodash"
+import _ from "lodash"
 import { Router } from "vue-router"
-import { getItem, setItem } from "./localstorage"
+import * as localstorage from "./localstorage"
 import moment from "moment"
+import { StoreParseObject } from "../main"
 
 export interface SingeUpUserData {
   username: string
@@ -59,12 +60,12 @@ function createParseGameObject() {
     isUsersTurn: function (userId: string): boolean {
       const lastMoveUser = this.get("lastMove")
 
-      if (!isUndefined(lastMoveUser)) {
+      if (!_.isUndefined(lastMoveUser)) {
         return lastMoveUser !== userId
       } else {
         const history = this.get("moveHistory")
 
-        if (!isUndefined(history) && history.length > 0) {
+        if (!_.isUndefined(history) && history.length > 0) {
           const lastMove = history[history.length - 1]
 
           return lastMove.user !== userId
@@ -81,7 +82,7 @@ function createParseGameObject() {
  * Creates all Parse Objects needed
  * @returns {} - Returns an object with the extended parse Objects
  */
-export function getParseObjects() {
+export function getParseStoreObject(): StoreParseObject {
   const Game = createParseGameObject()
 
   return { Game: new Game() }
@@ -89,7 +90,7 @@ export function getParseObjects() {
 
 async function setCurrentUser(): Promise<void> {
   const currentUser = getCurrentUser()
-  if (currentUser && isUndefined(currentUser.get("emailVerified")))
+  if (currentUser && _.isUndefined(currentUser.get("emailVerified")))
     await getUserById(currentUser.id)
 }
 
@@ -158,7 +159,7 @@ export function isLoggedIn(router?: Router): boolean {
   // sets isLoggedIn if debug is false
   if (!config.debug) isLoggedIn = Boolean(currentUser)
   // redirect if router is defined and not LoggedIn
-  if (!isLoggedIn && !isUndefined(router)) {
+  if (!isLoggedIn && !_.isUndefined(router)) {
     router.push("/login")
   }
   return isLoggedIn
@@ -245,7 +246,7 @@ export async function getGame(
   connection: string | ParseUser
 ): Promise<ParseGame | false | ParseGame[]> {
   if (isLoggedIn()) {
-    if (isString(connection)) {
+    if (_.isString(connection)) {
       const queryResponse = await parseQuery(createParseGameObject(), {
         objectId: String(connection),
       })
@@ -341,7 +342,7 @@ export async function callCloudCode(
  */
 export async function sendVerificationEmail(): Promise<boolean> {
   if (isLoggedIn() && !config.debug) {
-    const lastEmail = getItem("lastEmailSend")
+    const lastEmail = localstorage.getItem("lastEmailSend")
     const lastEmailDate = moment(lastEmail)
     const dateBefore = moment().subtract(config.email_resend_delay_sec, "seconds")
 
@@ -350,7 +351,7 @@ export async function sendVerificationEmail(): Promise<boolean> {
       if (currentUser) {
         try {
           const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
-          setItem("lastEmailSend", moment().toString())
+          localstorage.setItem("lastEmailSend", moment().toString())
           return true
         } catch (error) {
           console.error("error: ", error)

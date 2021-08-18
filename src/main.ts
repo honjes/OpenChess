@@ -6,12 +6,13 @@ import "equal-vue/dist/style.css"
 import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
 import {
-  getParseObjects,
+  getParseStoreObject,
   getCurrentUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
   isLoggedIn,
   emailIsVerified,
+  ParseObject,
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
@@ -67,6 +68,10 @@ export interface StoreCurrentUserInterface {
   friends: any[]
 }
 
+export interface StoreParseObject {
+  Game: ParseObject
+}
+
 function getCurrentUserObject(): StoreCurrentUserInterface {
   let returnUser: StoreCurrentUserInterface = {
     id: "",
@@ -98,13 +103,13 @@ initaliseParse()
 const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn(router)
-    const parseObjects = getParseObjects()
+    const parseStoreObject = getParseStoreObject()
     let parseUser = getCurrentUserObject()
 
     return {
       isLoggedIn,
       user: parseUser,
-      parseObjects,
+      parseObjects: parseStoreObject,
       windowWith: window.innerWidth,
       config: {
         debug: config.debug,
