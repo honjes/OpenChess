@@ -10,6 +10,16 @@ describe("form.usernameCheck", () => {
         let result: any = form.usernameCheck("user_name")
         expect(result).toBe(true)
     })
+
+    test("2", () => {
+        let result: any = form.usernameCheck("username")
+        expect(result).toBe(true)
+    })
+
+    test("3", () => {
+        let result: any = form.usernameCheck("user123")
+        expect(result).toBe(true)
+    })
 })
 
 // @ponicode
