@@ -1,5 +1,5 @@
 import { createApp, defineAsyncComponent } from "vue"
-import { createWebHistory, createRouter } from "vue-router"
+import { createWebHistory, createRouter, RouteRecordRaw } from "vue-router"
 import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
@@ -17,34 +17,41 @@ import {
 import { createStore } from "vuex"
 import config from "./config"
 
+const routes: RouteRecordRaw[] = [
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/",
+  },
+  {
+    path: "/",
+    name: "home",
+    component: defineAsyncComponent(() => import("./pages/home.vue")),
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: defineAsyncComponent(() => import("./pages/login.vue")),
+  },
+  {
+    path: "/user",
+    name: "user",
+    component: defineAsyncComponent(() => import("./pages/user.vue")),
+  },
+  {
+    path: "/game/:gameId",
+    name: "game",
+    component: defineAsyncComponent(() => import("./pages/game.vue")),
+  },
+]
+
+if(config.debug) routes.push({
+  path: "/playground",
+  name: "playground",
+  component: defineAsyncComponent(() => import("./pages/playground.vue")),})
+
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    {
-      path: "/:pathMatch(.*)*",
-      redirect: "/",
-    },
-    {
-      path: "/",
-      name: "home",
-      component: defineAsyncComponent(() => import("./pages/home.vue")),
-    },
-    {
-      path: "/login",
-      name: "login",
-      component: defineAsyncComponent(() => import("./pages/login.vue")),
-    },
-    {
-      path: "/user",
-      name: "user",
-      component: defineAsyncComponent(() => import("./pages/user.vue")),
-    },
-    {
-      path: "/game/:gameId",
-      name: "game",
-      component: defineAsyncComponent(() => import("./pages/game.vue")),
-    },
-  ],
+  routes,
 })
 
 export interface StoreInterface {
