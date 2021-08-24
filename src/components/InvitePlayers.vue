@@ -1,14 +1,14 @@
 <template>
   <div class="oc-invite_player">
     <CreateGame />
-    <div class="friends" v-if="friends.length > 0">
+    <div class="friends">
       <div class="friends_request">
         <it-input
           v-if="showAddFriends"
           placeholder="Name of the User to add"
           v-model="addFriendInput"
         />
-        <span v-if="!showAddFriends">Invite User</span>
+        <span v-if="!showAddFriends">Add Friend</span>
         <it-icon name="person_add" @click="showAddFriendClickHander" />
       </div>
       <div class="friends_requests" v-for="friend in friendRequests" :key="friend.id">
@@ -18,10 +18,12 @@
         </div>
       </div>
       <it-divider v-if="friendRequests.length > 0" />
-      <div class="friends_list" v-for="friend in friends" :key="friend.id">
-        <div class="friend">
-          <span>{{ friend.get("username") }}</span>
-          <Avatar :color="friend.get('color')" :text="friend.get('username')" />
+      <div class="showWrapper" v-if="friends.length > 0">
+        <div class="friends_list" v-for="friend in friends" :key="friend.id">
+          <div class="friend">
+            <span>{{ friend.get("username") }}</span>
+            <Avatar :color="friend.get('color')" :text="friend.get('username')" />
+          </div>
         </div>
       </div>
     </div>
@@ -32,13 +34,7 @@
 import CreateGame from "./CreateGame.vue"
 import Avatar from "./Avatar.vue"
 import { ref } from "vue"
-import {
-  getCurrentUser,
-  getUserById,
-  sendFriendRequest,
-  currentFriendRequests,
-  getFriends,
-} from "../util/parse"
+import { getCurrentUser, sendFriendRequest, currentFriendRequests, getFriends } from "../util/parse"
 
 export default {
   name: "InvitePlayers",
@@ -69,7 +65,6 @@ export default {
     async showAddFriendClickHander() {
       this.showAddFriends = !this.showAddFriends
       if (!this.showAddFriends && this.addFriendInput !== "") {
-        console.log("addFriendInput: ", this.addFriendInput)
         await sendFriendRequest(this.addFriendInput)
       }
     },
