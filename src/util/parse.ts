@@ -60,9 +60,9 @@ function createParseGameObject() {
     isUsersTurn: function (userId: string): boolean {
       const lastMoveUser = this.get("lastMove")
 
-      if (!_.isUndefined(lastMoveUser)) {
+      if (!_.isUndefined(lastMoveUser) && lastMoveUser !== " " && lastMoveUser !== "")
         return lastMoveUser !== userId
-      } else {
+      else {
         const history = this.get("moveHistory")
 
         if (!_.isUndefined(history) && history.length > 0) {
@@ -284,13 +284,12 @@ export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
   return false
 }
 
-export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
+export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
   const game = await getGame(gameId)
   const user = getCurrentUser()
   if (game && user && game.get("lastMove") !== user.id) {
-    game.set("fen", fen)
-    game.add("moveHistory", { user: user.id })
-    game.set("lastMove", user.id)
+    game.set("fen", gameObject.fen())
+    game.set("pgn", gameObject.pgn())
     try {
       await game.save()
       return true
@@ -366,14 +365,10 @@ export async function sendVerificationEmail(): Promise<boolean> {
 export async function sendFriendRequest(friendName: string): Promise<boolean> {
   const current = getCurrentUser()
   const newFriend = await getUserByName(friendName)
-  console.log("current: ", current)
-  console.log("friendName: ", friendName)
-  console.log("newFriend: ", newFriend)
 
   if (current && newFriend) {
     const friendsRel = current.relation("friends")
     friendsRel.add(newFriend)
-    console.log("newFriend: ", newFriend)
 
     try {
       await current.save()
@@ -412,7 +407,6 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
     const currentFriends = await getFriends(current.id)
 
     if (currentFriends) {
-      console.log("currentFriends: ", currentFriends)
       // applie filter to Querys
       friendQuery.equalTo("objectId", current.id)
       query.matchesQuery("friends", friendQuery)
@@ -430,10 +424,8 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
 
           return returnValue
         })
-        console.log("removedFriends: ", removedFriends)
-        console.log("friendRequests: ", friendRequests)
 
-        return []
+        return friendRequests
       } catch (error) {
         console.error("error: ", error)
         return false
