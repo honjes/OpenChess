@@ -1,49 +1,57 @@
 import { createApp, defineAsyncComponent } from "vue"
-import { createWebHistory, createRouter } from "vue-router"
+import { createWebHistory, createRouter, RouteRecordRaw } from "vue-router"
 import App from "./App.vue"
 import Equal from "equal-vue"
 import "equal-vue/dist/style.css"
 import "bootstrap/dist/css/bootstrap-grid.css"
 import "./static/scss/index.scss"
 import {
-  getParseObjects,
+  getParseStoreObject,
   getCurrentUser,
   initaliseParse,
   isLoggedIn as parseIsLoggedIn,
   isLoggedIn,
   emailIsVerified,
+  ParseObject,
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
 
+const routes: RouteRecordRaw[] = [
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/",
+  },
+  {
+    path: "/",
+    name: "home",
+    component: defineAsyncComponent(() => import("./pages/home.vue")),
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: defineAsyncComponent(() => import("./pages/login.vue")),
+  },
+  {
+    path: "/user",
+    name: "user",
+    component: defineAsyncComponent(() => import("./pages/user.vue")),
+  },
+  {
+    path: "/game/:gameId",
+    name: "game",
+    component: defineAsyncComponent(() => import("./pages/game.vue")),
+  },
+]
+
+if(config.debug) routes.push({
+  path: "/playground",
+  name: "playground",
+  component: defineAsyncComponent(() => import("./pages/playground.vue")),})
+
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    {
-      path: "/:pathMatch(.*)*",
-      redirect: "/",
-    },
-    {
-      path: "/",
-      name: "home",
-      component: defineAsyncComponent(() => import("./pages/home.vue")),
-    },
-    {
-      path: "/login",
-      name: "login",
-      component: defineAsyncComponent(() => import("./pages/login.vue")),
-    },
-    {
-      path: "/user",
-      name: "user",
-      component: defineAsyncComponent(() => import("./pages/user.vue")),
-    },
-    {
-      path: "/game/:gameId",
-      name: "game",
-      component: defineAsyncComponent(() => import("./pages/game.vue")),
-    },
-  ],
+  routes,
 })
 
 export interface StoreInterface {
@@ -64,10 +72,22 @@ export interface StoreCurrentUserInterface {
   color: string
   email: string
   emailIsVerified: boolean
+  friends: any[]
+}
+
+export interface StoreParseObject {
+  Game: ParseObject
 }
 
 function getCurrentUserObject(): StoreCurrentUserInterface {
-  let returnUser = { id: "", username: "", color: "", email: "", emailIsVerified: false }
+  let returnUser: StoreCurrentUserInterface = {
+    id: "",
+    username: "",
+    color: "",
+    email: "",
+    emailIsVerified: false,
+    friends: [],
+  }
   const isLoggedIn = parseIsLoggedIn()
 
   if (isLoggedIn) {
@@ -78,6 +98,7 @@ function getCurrentUserObject(): StoreCurrentUserInterface {
         username: currentUser.getUsername(),
         color: String(currentUser.get("color")),
         email: String(currentUser.get("email")),
+        friends: currentUser.get("friends"),
         emailIsVerified: emailIsVerified(),
       }
     }
@@ -89,13 +110,13 @@ initaliseParse()
 const store = createStore({
   state(): StoreInterface {
     const isLoggedIn = parseIsLoggedIn(router)
-    const parseObjects = getParseObjects()
+    const parseStoreObject = getParseStoreObject()
     let parseUser = getCurrentUserObject()
 
     return {
       isLoggedIn,
       user: parseUser,
-      parseObjects,
+      parseObjects: parseStoreObject,
       windowWith: window.innerWidth,
       config: {
         debug: config.debug,

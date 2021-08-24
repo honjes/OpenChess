@@ -1,8 +1,9 @@
 <template>
   <div class="oc-create_game">
     <it-input
+      class="input"
       label-top="Playername"
-      placeholder="Username of the Player you want to invite to a game"
+      placeholder="Player you want to invite to a game"
       :value="playername"
       @input="changePlayername"
     />
@@ -19,6 +20,11 @@ export default {
       playername: "",
     }
   },
+  computed: {
+    user() {
+      return this.$store.state.user
+    },
+  },
   methods: {
     changePlayername(e: any) {
       this.playername = e.currentTarget.value
@@ -30,4 +36,15 @@ export default {
 }
 </script>
 
-<style></style>
+<style lang="scss">
+.oc-create_game {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+
+  > div {
+    width: 100%;
+    margin-right: 20px;
+  }
+}
+</style>

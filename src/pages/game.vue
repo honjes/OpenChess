@@ -39,7 +39,6 @@
           :defaultFen="game.get('fen')"
           :id="game.id"
           :playing="user.id"
-          @onEnemyMove="onEnemyMove"
         />
       </div>
     </div>
@@ -79,9 +78,6 @@ export default {
         this.enemy = enemy
       }
       this.game = game
-    },
-    async onEnemyMove() {
-      await this.loadGame()
     },
   },
   computed: {

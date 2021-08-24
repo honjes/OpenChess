@@ -1,9 +1,10 @@
 import Parse from "parse/dist/parse.min.js"
 import config from "../config"
-import { isString, isUndefined } from "lodash"
+import _ from "lodash"
 import { Router } from "vue-router"
-import { getItem, setItem } from "./localstorage"
+import * as localstorage from "./localstorage"
 import moment from "moment"
+import { StoreParseObject } from "../main"
 
 export interface SingeUpUserData {
   username: string
@@ -13,16 +14,12 @@ export interface SingeUpUserData {
 
 export interface ParseObject {
   id: string
-  get?: (varName: string) => string | boolean | ParseObject
+  get?: (varName: string) => any | any[]
   set?: (varName: string, varValue: any) => void
   add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
   save?: () => void
-  [index: string]:
-    | string
-    | number
-    | undefined
-    | ((index?: string, index2?: any) => void | string | boolean | ParseObject)
+  [index: string]: string | number | undefined | ((index?: string, index2?: any) => any)
 }
 
 export interface ParseUser extends ParseObject {
@@ -63,12 +60,12 @@ function createParseGameObject() {
     isUsersTurn: function (userId: string): boolean {
       const lastMoveUser = this.get("lastMove")
 
-      if (!isUndefined(lastMoveUser)) {
+      if (!_.isUndefined(lastMoveUser) && lastMoveUser !== " " && lastMoveUser !== "")
         return lastMoveUser !== userId
-      } else {
+      else {
         const history = this.get("moveHistory")
 
-        if (!isUndefined(history) && history.length > 0) {
+        if (!_.isUndefined(history) && history.length > 0) {
           const lastMove = history[history.length - 1]
 
           return lastMove.user !== userId
@@ -85,7 +82,7 @@ function createParseGameObject() {
  * Creates all Parse Objects needed
  * @returns {} - Returns an object with the extended parse Objects
  */
-export function getParseObjects() {
+export function getParseStoreObject(): StoreParseObject {
   const Game = createParseGameObject()
 
   return { Game: new Game() }
@@ -93,7 +90,7 @@ export function getParseObjects() {
 
 async function setCurrentUser(): Promise<void> {
   const currentUser = getCurrentUser()
-  if (currentUser && isUndefined(currentUser.get("emailVerified")))
+  if (currentUser && _.isUndefined(currentUser.get("emailVerified")))
     await getUserById(currentUser.id)
 }
 
@@ -162,7 +159,7 @@ export function isLoggedIn(router?: Router): boolean {
   // sets isLoggedIn if debug is false
   if (!config.debug) isLoggedIn = Boolean(currentUser)
   // redirect if router is defined and not LoggedIn
-  if (!isLoggedIn && !isUndefined(router)) {
+  if (!isLoggedIn && !_.isUndefined(router)) {
     router.push("/login")
   }
   return isLoggedIn
@@ -221,6 +218,7 @@ export async function parseQuery(
 ): Promise<any | false> {
   if (!config.debug && isLoggedIn()) {
     try {
+      // check if object is User
       const query = new Parse.Query(object)
 
       // Adding queryParameters
@@ -248,7 +246,7 @@ export async function getGame(
   connection: string | ParseUser
 ): Promise<ParseGame | false | ParseGame[]> {
   if (isLoggedIn()) {
-    if (isString(connection)) {
+    if (_.isString(connection)) {
       const queryResponse = await parseQuery(createParseGameObject(), {
         objectId: String(connection),
       })
@@ -286,13 +284,12 @@ export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
   return false
 }
 
-export async function setNewGameFen(gameId: string, fen: string): Promise<boolean> {
+export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
   const game = await getGame(gameId)
   const user = getCurrentUser()
   if (game && user && game.get("lastMove") !== user.id) {
-    game.set("fen", fen)
-    game.add("moveHistory", { user: user.id })
-    game.set("lastMove", user.id)
+    game.set("fen", gameObject.fen())
+    game.set("pgn", gameObject.pgn())
     try {
       await game.save()
       return true
@@ -314,10 +311,10 @@ export async function getUserById(userId: string): Promise<ParseGame | false> {
   return false
 }
 
-export async function getUserByName(userId: string): Promise<ParseGame | false> {
+export async function getUserByName(username: string): Promise<ParseGame | false> {
   if (isLoggedIn()) {
     const response = await parseQuery(Parse.User, {
-      userId: userId,
+      username: username,
     })
     return response[0]
   }
@@ -344,7 +341,7 @@ export async function callCloudCode(
  */
 export async function sendVerificationEmail(): Promise<boolean> {
   if (isLoggedIn() && !config.debug) {
-    const lastEmail = getItem("lastEmailSend")
+    const lastEmail = localstorage.getItem("lastEmailSend")
     const lastEmailDate = moment(lastEmail)
     const dateBefore = moment().subtract(config.email_resend_delay_sec, "seconds")
 
@@ -353,12 +350,85 @@ export async function sendVerificationEmail(): Promise<boolean> {
       if (currentUser) {
         try {
           const response = await Parse.User.requestEmailVerification(currentUser.get("email"))
-          setItem("lastEmailSend", moment().toString())
+          localstorage.setItem("lastEmailSend", moment().toString())
           return true
         } catch (error) {
           console.error("error: ", error)
           return false
         }
+      }
+    }
+  }
+  return false
+}
+
+export async function sendFriendRequest(friendName: string): Promise<boolean> {
+  const current = getCurrentUser()
+  const newFriend = await getUserByName(friendName)
+
+  if (current && newFriend) {
+    const friendsRel = current.relation("friends")
+    friendsRel.add(newFriend)
+
+    try {
+      await current.save()
+      return true
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  return false
+}
+
+export async function getFriends(userId: string): Promise<false | ParseUser[]> {
+  const user = await getUserById(userId)
+
+  if (user) {
+    const friendRel = user.relation("friends")
+    try {
+      const friendQuery = await friendRel.query()
+      const currentFriends = await friendQuery.find()
+      return currentFriends
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
+  }
+
+  return false
+}
+
+export async function currentFriendRequests(): Promise<false | ParseUser[]> {
+  const current = getCurrentUser()
+  const query = new Parse.Query(Parse.User)
+  const friendQuery = new Parse.Query(Parse.User)
+
+  if (current) {
+    const currentFriends = await getFriends(current.id)
+
+    if (currentFriends) {
+      // applie filter to Querys
+      friendQuery.equalTo("objectId", current.id)
+      query.matchesQuery("friends", friendQuery)
+      try {
+        let friendRequests = await query.find()
+        // const friendIds = friendRequests.
+        const removedFriends = _.remove(friendRequests, value => {
+          const currUserId = value.id
+          var returnValue = false
+
+          currentFriends.map(friend => {
+            if (friend.id === currUserId) returnValue = true
+            return false
+          })
+
+          return returnValue
+        })
+
+        return friendRequests
+      } catch (error) {
+        console.error("error: ", error)
+        return false
       }
     }
   }

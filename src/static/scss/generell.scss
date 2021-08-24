@@ -5,6 +5,10 @@ body {
   color: $default-text-color;
 
   // Equal Overrides
+  .it-input,
+  .it-input::placeholder {
+    color: $default-placeholder-color;
+  }
   .it-input-label {
     color: $default-text-color;
   }

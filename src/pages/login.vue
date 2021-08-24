@@ -1,5 +1,5 @@
 <template>
-  <div id="oc-login_site" class="container">
+  <div id="oc-login_site" class="container" @keydown.enter="loginEnterPress">
     <div v-if="showSignUpForm">
       <h3>Create User Account</h3>
       <div class="form">
@@ -61,7 +61,6 @@
 </template>
 
 <script lang="ts">
-import { isUndefined } from "lodash"
 import { ref } from "vue"
 import { singeUpUser, isLoggedIn, loginUser } from "../util/parse"
 import {
@@ -74,6 +73,7 @@ import {
   hasNoErrors,
 } from "../util/form"
 import { getItem, setItem } from "../util/localstorage"
+import config from "../config"
 
 export default {
   name: "Login",
@@ -90,8 +90,9 @@ export default {
     }
   },
   mounted() {
+    if(config.debug) this.redirectTo("playground")
     // Check if user is logedIn and then redirecting
-    if (isLoggedIn()) this.$router.push({ name: "home" })
+    if (isLoggedIn()) this.redirectTo("home")
   },
   methods: {
     changeForm() {
@@ -100,6 +101,10 @@ export default {
     },
     redirectTo(page = "home") {
       this.$router.push({ name: page })
+    },
+    loginEnterPress() {
+      if (this.showSignUpForm) this.registerUser()
+      else this.clickLoginUser()
     },
     // Imported Functions
     // Parse Functions

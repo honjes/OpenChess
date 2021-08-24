@@ -4,12 +4,12 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { Chess } from "chess.js"
 import { Chessground } from "chessground"
 import { uniques } from "../util/chessboard"
 import { getGameSubscription } from "../util/parse"
-import { isUndefined } from "lodash"
+import _ from "lodash"
 import { ref } from "vue"
 
 export default {
@@ -17,7 +17,6 @@ export default {
   props: {
     fen: {
       type: String,
-      default: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     },
     free: {
       type: Boolean,
@@ -44,6 +43,10 @@ export default {
       type: String,
       requried: true,
     },
+    pgn: {
+      type: String,
+      required: true,
+    },
   },
   watch: {
     orientation(orientation) {
@@ -59,9 +62,10 @@ export default {
   },
   methods: {
     setGameWidth() {
-      this.windowWith = window.innerWidth
       const gameBorder = 50
-      if (isUndefined(this) || this.windowWith > 700 + gameBorder) this.gameWidth = "700px"
+      this.windowWith = window.innerWidth
+
+      if (_.isUndefined(this) || this.windowWith > 700 + gameBorder) this.gameWidth = "700px"
       else this.gameWidth = `${this.windowWith - gameBorder}px`
     },
     /* Chess functions */
@@ -141,16 +145,13 @@ export default {
         this.afterMove()
       }
     },
-    afterMove(emit = true) {
+    afterMove() {
       if (this.showThreats) {
         this.paintThreats()
       }
-      if (emit) {
-        let threats = this.countThreats(this.toColor()) || {}
-        threats["history"] = this.game.history()
-        threats["fen"] = this.game.fen()
-        this.$emit("onMove", threats)
-      }
+      this.paintCrucialThreats()
+
+      this.$emit("onMove", this.game)
     },
     countThreats(color) {
       let threats = {}
@@ -180,13 +181,14 @@ export default {
       threats[`turn`] = color
       return threats
     },
-    loadPosition(emit = true) {
+    loadPosition() {
       let orientation
 
       if (this.color === "white" || this.color === "black") orientation = this.color
       else orientation = this.orientation
 
-      this.game.load(this.fen)
+      if (!_.isUndefined(this.pgn)) this.game.load_pgn(this.pgn)
+      else this.game.load(this.fen)
       this.board = Chessground(this.$refs.board, {
         fen: this.game.fen(),
         turnColor: this.toColor(),
@@ -199,11 +201,25 @@ export default {
       this.board.set({
         movable: { events: { after: this.changeTurn() } },
       })
-      this.afterMove(emit)
+      this.afterMove()
     },
     // Custom Functions
+    paintCrucialThreats() {
+      // Only paint if user is in_check
+      if (this.game.in_check()) {
+        let threats = []
+        const kingPos = this.getPosition("k", this.game.turn())[0]
+        const lastMove = this.game.history({ verbose: true }).pop()
+
+        threats.push({ orig: lastMove.to, brush: "yellow" })
+        threats.push({ orig: kingPos, brush: "red" })
+        threats.push({ orig: lastMove.to, dest: kingPos, brush: "red" })
+
+        this.board.setShapes(threats)
+      }
+    },
     getMovable() {
-      const currentColor = isUndefined(this.toColor()) ? "" : this.toColor()
+      const currentColor = _.isUndefined(this.toColor()) ? "" : this.toColor()
       let returnOb = {}
 
       if (currentColor !== "") {
@@ -218,12 +234,51 @@ export default {
 
       return returnOb
     },
+    alphabetPosition(letter: string): number {
+      const charCode = parseInt(letter, 36)
+      return charCode - 10
+    },
+    letterFromAlphabetPosition(position: number): string {
+      switch (position) {
+        case 1:
+          return "a"
+        case 2:
+          return "b"
+        case 3:
+          return "c"
+        case 4:
+          return "d"
+        case 5:
+          return "e"
+        case 6:
+          return "f"
+        case 7:
+          return "g"
+        case 8:
+          return "h"
+        default:
+          return "outside of the Chessrange"
+      }
+    },
+    getPosition(pice: string, color = "w") {
+      const board = this.game.board()
+      let partPos = []
+
+      board.map((row, rowIndex) => {
+        row.map((col, colIndex) => {
+          if (col !== null && col.color === color && col.type === pice) {
+            partPos.push(`${this.letterFromAlphabetPosition(1 + colIndex)}${8 - rowIndex}`)
+          }
+        })
+      })
+
+      return partPos
+    },
     gameUpdateHandler(object) {
       const newFen = object.get("fen")
 
       this.fen = newFen
-      this.loadPosition(false)
-      this.$emit("onEnemyMove")
+      this.loadPosition()
     },
   },
   setup(props) {
@@ -231,16 +286,13 @@ export default {
       windowWith: ref(0),
       gameWidth: ref("700px"),
       game: new Chess(),
+      fen: ref(props.fen),
+      pgn: ref(props.pgn),
       board: null,
       promotions: [],
       promoteTo: "q",
       color: ref(props.color),
       gameId: ref(props.gameId),
-    }
-  },
-  data() {
-    return {
-      fen: this.$props.fen,
     }
   },
   async mounted() {
@@ -255,7 +307,7 @@ export default {
 
     // Setup Subscription to update when Game Object updates
     this.subscription = await getGameSubscription(this.gameId)
-    if (!isUndefined(this.subscription) && this.subscription !== false)
+    if (!_.isUndefined(this.subscription) && this.subscription !== false)
       this.subscription.on("update", this.gameUpdateHandler)
 
     return {
@@ -265,6 +317,6 @@ export default {
   onBeforeUnmount() {
     this.subscription.unsubscribe()
   },
-  emits: ["onMove", "onEnemyMove"],
+  emits: ["onMove"],
 }
 </script>
