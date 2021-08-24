@@ -6,8 +6,8 @@
       :gameId="id"
       :color="gameColor"
       :fen="currentFen"
+      :pgn="currentPgn"
       @onMove="onChessMove"
-      @onEnemyMove="onEnemyMove"
     />
   </div>
 </template>
@@ -15,8 +15,8 @@
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
 import { ref } from "vue"
-import { getGame, setWhiteToCurrent, setNewGameFen, getGameSubscription } from "../util/parse"
-import { isUndefined } from "lodash"
+import { getGame, setWhiteToCurrent, updateGame } from "../util/parse"
+import _, { isUndefined } from "lodash"
 
 export default {
   setup(props) {
@@ -36,27 +36,36 @@ export default {
     return {}
   },
   methods: {
-    onEnemyMove() {
-      this.$emit("onEnemyMove")
-    },
-    async onChessMove(ev) {
-      const { fen } = ev
-      if (fen !== this.currentFen) {
-        this.currentFen = fen
-        await setNewGameFen(this.id, fen)
+    async onChessMove(game) {
+      const gameFen = game.fen()
+      const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+      if (
+        game !== false &&
+        gameFen !== startFen &&
+        this.game !== false &&
+        gameFen !== this.currentFen
+      ) {
+        this.currentFen = gameFen
+        await updateGame(this.id, game)
       }
     },
     async setupGameConnection() {
       if (!isUndefined(this.id) && this.id !== "") {
         this.game = await getGame(this.id)
         let newGameColor = ""
-        if (this.game.get("white") === "") {
+
+        if (this.game.get("white") === "" || this.game.get("white") === " ") {
           await setWhiteToCurrent(this.id)
           newGameColor = "white"
         } else if (this.game.get("white") === this.playing) newGameColor = "white"
         else newGameColor = "black"
 
         this.gameColor = newGameColor
+        if (this.game) {
+          this.currentFen = this.game.get("fen")
+          this.currentPgn = this.game.get("pgn")
+        }
       }
     },
   },
