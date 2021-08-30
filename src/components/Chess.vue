@@ -8,6 +8,7 @@
       :fen="currentFen"
       :pgn="currentPgn"
       @onMove="onChessMove"
+      @onFinish="onChessFinish"
     />
   </div>
 </template>
@@ -15,8 +16,8 @@
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
 import { ref } from "vue"
-import { getGame, setWhiteToCurrent, updateGame } from "../util/parse"
-import _, { isUndefined } from "lodash"
+import { getCurrentUser, getGame, initaliseGame, updateGame } from "../util/parse"
+import _ from "lodash"
 
 export default {
   setup(props) {
@@ -27,6 +28,7 @@ export default {
       id: props.id,
       gameColor: ref(""),
       currentFen: ref(currentFen),
+      currentPgn: ref(props.pgn),
       playing: ref(props.playing),
     }
   },
@@ -51,14 +53,15 @@ export default {
       }
     },
     async setupGameConnection() {
-      if (!isUndefined(this.id) && this.id !== "") {
+      const currentUser = getCurrentUser()
+      if (!_.isUndefined(this.id) && this.id !== "" && currentUser) {
         this.game = await getGame(this.id)
         let newGameColor = ""
 
-        if (this.game.get("white") === "" || this.game.get("white") === " ") {
-          await setWhiteToCurrent(this.id)
+        if (_.isUndefined(this.game.get("white"))) {
+          await initaliseGame(this.id)
           newGameColor = "white"
-        } else if (this.game.get("white") === this.playing) newGameColor = "white"
+        } else if (this.game.get("white").id === currentUser.id) newGameColor = "white"
         else newGameColor = "black"
 
         this.gameColor = newGameColor
@@ -67,6 +70,9 @@ export default {
           this.currentPgn = this.game.get("pgn")
         }
       }
+    },
+    async onChessFinish() {
+      this.$emit("gameFinished")
     },
   },
   components: {
@@ -81,6 +87,9 @@ export default {
       type: String,
       default: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     },
+    pgn: {
+      type: String,
+    },
     playing: {
       type: String,
       required: true,
@@ -90,6 +99,7 @@ export default {
       required: true,
     },
   },
+  emits: ["onFinish"],
 }
 </script>
 
