@@ -146,12 +146,12 @@ export default {
       }
     },
     afterMove() {
-      if (this.showThreats) {
-        this.paintThreats()
-      }
+      if (this.showThreats) this.paintThreats()
       this.paintCrucialThreats()
 
       this.$emit("onMove", this.game)
+      // check if game is finished
+      if (this.game.game_over) this.$emit("onFinish", this.game)
     },
     countThreats(color) {
       let threats = {}
