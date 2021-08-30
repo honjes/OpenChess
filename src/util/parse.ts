@@ -356,7 +356,7 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
   return false
 }
 
-export async function createGameWithCurrent(enemyName: string): Promise<boolean> {
+export async function createGameWithCurrent(enemyName: string): Promise<false | string> {
   const enemy = await getUserByName(enemyName)
   const user = getCurrentUser()
 
@@ -364,9 +364,11 @@ export async function createGameWithCurrent(enemyName: string): Promise<boolean>
     const gameObject = await initaliseGameObject(user, enemy)
 
     try {
-      await gameObject.save()
+      const game = await gameObject.save()
+      return game.id
     } catch (error) {
       console.error("error:", error)
+      return false
     }
   }
 
