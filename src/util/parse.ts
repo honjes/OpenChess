@@ -19,7 +19,7 @@ export interface ParseObject {
   set?: (varName: string, varValue: any) => void
   add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
-  save?: () => void
+  save?: () => Promise<ParseObject>
   [index: string]: string | number | undefined | ((index?: string, index2?: any) => any)
 }
 
