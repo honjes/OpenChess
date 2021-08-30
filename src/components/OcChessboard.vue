@@ -14,51 +14,42 @@ import { ref } from "vue"
 
 export default {
   name: "chessboard",
-  props: {
-    fen: {
-      type: String,
-    },
-    free: {
-      type: Boolean,
-      default: false,
-    },
-    showThreats: {
-      type: Boolean,
-      default: false,
-    },
-    onPromotion: {
-      type: Function,
-      default: () => "q",
-    },
-    orientation: {
-      type: String,
-      default: "white",
-    },
-    // Custom Params
-    color: {
-      type: String,
-      default: "",
-    },
-    gameId: {
-      type: String,
-      requried: true,
-    },
-    pgn: {
-      type: String,
-      required: true,
-    },
+  setup(props) {
+    return {
+      windowWith: ref(0),
+      gameWidth: ref("700px"),
+      game: new Chess(),
+      fen: ref(props.fen),
+      pgn: ref(props.pgn),
+      board: null,
+      promotions: [],
+      promoteTo: "q",
+      color: ref(props.color),
+      gameId: ref(props.gameId),
+      finished: ref(false),
+    }
   },
-  watch: {
-    orientation(orientation) {
-      this.orientation = orientation
-      this.loadPosition()
-    },
-    showThreats(st) {
-      this.showThreats = st
-      if (this.showThreats) {
-        this.paintThreats()
+  async mounted() {
+    this.loadPosition()
+
+    const windowWithListener = this.$store.subscribe((mutation, state) => {
+      if (mutation.type === "refreshWindowSize") {
+        this.setGameWidth()
       }
-    },
+    })
+    this.setGameWidth()
+
+    // Setup Subscription to update game on move
+    this.subscription = await getGameSubscription(this.gameId)
+    if (!_.isUndefined(this.subscription) && this.subscription !== false)
+      this.subscription.on("update", this.gameUpdateHandler)
+
+    return {
+      windowWithListener,
+    }
+  },
+  onBeforeUnmount() {
+    this.subscription.unsubscribe()
   },
   methods: {
     setGameWidth() {
@@ -285,42 +276,52 @@ export default {
       this.loadPosition()
     },
   },
-  setup(props) {
-    return {
-      windowWith: ref(0),
-      gameWidth: ref("700px"),
-      game: new Chess(),
-      fen: ref(props.fen),
-      pgn: ref(props.pgn),
-      board: null,
-      promotions: [],
-      promoteTo: "q",
-      color: ref(props.color),
-      gameId: ref(props.gameId),
-    }
+  props: {
+    fen: {
+      type: String,
+    },
+    free: {
+      type: Boolean,
+      default: false,
+    },
+    showThreats: {
+      type: Boolean,
+      default: false,
+    },
+    onPromotion: {
+      type: Function,
+      default: () => "q",
+    },
+    orientation: {
+      type: String,
+      default: "white",
+    },
+    // Custom Params
+    color: {
+      type: String,
+      default: "",
+    },
+    gameId: {
+      type: String,
+      requried: true,
+    },
+    pgn: {
+      type: String,
+      required: true,
+    },
   },
-  async mounted() {
-    this.loadPosition()
-
-    const windowWithListener = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "refreshWindowSize") {
-        this.setGameWidth()
+  watch: {
+    orientation(orientation) {
+      this.orientation = orientation
+      this.loadPosition()
+    },
+    showThreats(st) {
+      this.showThreats = st
+      if (this.showThreats) {
+        this.paintThreats()
       }
-    })
-    this.setGameWidth()
-
-    // Setup Subscription to update when Game Object updates
-    this.subscription = await getGameSubscription(this.gameId)
-    if (!_.isUndefined(this.subscription) && this.subscription !== false)
-      this.subscription.on("update", this.gameUpdateHandler)
-
-    return {
-      windowWithListener,
-    }
+    },
   },
-  onBeforeUnmount() {
-    this.subscription.unsubscribe()
-  },
-  emits: ["onMove"],
+  emits: ["onMove", "onFinish"],
 }
 </script>
