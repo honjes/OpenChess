@@ -178,33 +178,6 @@ export function emailIsVerified(): boolean {
 }
 
 /**
- * Check the current loggedin user and returns it
- * @returns {ParseUser | false} - Returns the Userobject if logged in else returns false
- */
-export function getCurrentUser(): ParseUser | false {
-  if (!config.debug) {
-    const currentUser: ParseUser = Parse.User.current()
-    if (currentUser?.id) return currentUser
-  }
-  return false
-}
-
-export async function createGameWithCurrent(enemyName: string): Promise<boolean> {
-  const Game = createParseGameObject()
-  const users = [getCurrentUser(), await getUserByName(enemyName)]
-
-  const gameObject = new Game()
-  gameObject.set("users", users)
-  try {
-    await gameObject.save()
-  } catch (error) {
-    console.error("error:", error)
-  }
-
-  return false
-}
-
-/**
  * Makes an equalTo query to Parse
  * @param object {any} - ParseObject that should be searched
  * @param column {string} - name of the column that should be searched
@@ -238,45 +211,13 @@ export async function parseQuery(
 }
 
 /**
- * Returns a specific game or games for a specific user
- * @param connection {string | ParseUser} - Id of a specific game or userObject to get games for that user
+ * Check the current loggedin user and returns it
+ * @returns {ParseUser | false} - Returns the Userobject if logged in else returns false
  */
-export async function getGame(connection: ParseUser): Promise<ParseGame[] | false>
-export async function getGame(connection: string): Promise<ParseGame | false>
-export async function getGame(
-  connection: string | ParseUser
-): Promise<ParseGame | false | ParseGame[]> {
-  if (isLoggedIn()) {
-    if (_.isString(connection)) {
-      const queryResponse = await parseQuery(createParseGameObject(), {
-        objectId: String(connection),
-      })
-      const responseObject = queryResponse[0]
-
-      return responseObject
-    } else {
-      const response = await parseQuery(createParseGameObject(), {
-        users: connection,
-      })
-      return response
-    }
-  }
-  return false
-}
-
-export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
-  const game = await getGame(gameId)
-  const user = getCurrentUser()
-  if (game && user && game.get("lastMove") !== user.id) {
-    game.set("fen", gameObject.fen())
-    game.set("pgn", gameObject.pgn())
-    try {
-      await game.save()
-      return true
-    } catch (error) {
-      console.error("error: ", error)
-      return false
-    }
+export function getCurrentUser(): ParseUser | false {
+  if (!config.debug) {
+    const currentUser: ParseUser = Parse.User.current()
+    if (currentUser?.id) return currentUser
   }
   return false
 }
@@ -415,6 +356,99 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
   return false
 }
 
+export async function createGameWithCurrent(enemyName: string): Promise<boolean> {
+  const enemy = await getUserByName(enemyName)
+  const user = getCurrentUser()
+
+  if (user && enemy) {
+    const gameObject = await initaliseGameObject(user, enemy)
+
+    try {
+      await gameObject.save()
+    } catch (error) {
+      console.error("error:", error)
+    }
+  }
+
+  return false
+}
+
+/**
+ * initalises parse gameobject with the current user as white
+ * @param currentUser {ParseUser} - current user
+ * @param enemy {ParseUser} - enemy user
+ * @returns {boolean} - returns false if there was an error else returns true
+ */
+async function initaliseGameObject(currentUser: ParseUser, enemy: ParseUser): Promise<ParseGame> {
+  const Game = createParseGameObject()
+  const gameObject = new Game()
+  const chess = new Chess()
+
+  // initalise chess pgn
+  const initPgn = [
+    '[Event "Casual"]',
+    '[Site "OpenChess"]',
+    `[White "${currentUser.getUsername()}"]`,
+    `[Black "${enemy.getUsername()}"]`,
+    "",
+    "1.",
+  ]
+  chess.load_pgn(initPgn.join("\n"))
+
+  // initalise chess game
+  gameObject.set("users", [currentUser, enemy])
+  gameObject.set("started", true)
+  gameObject.set("white", currentUser)
+  gameObject.set("pgn", chess.pgn())
+
+  return gameObject
+}
+
+/**
+ * Returns a specific game or games for a specific user
+ * @param connection {string | ParseUser} - Id of a specific game or userObject to get games for that user
+ */
+export async function getGame(connection: ParseUser): Promise<ParseGame[] | false>
+export async function getGame(connection: string): Promise<ParseGame | false>
+export async function getGame(
+  connection: string | ParseUser
+): Promise<ParseGame | false | ParseGame[]> {
+  if (isLoggedIn()) {
+    if (_.isString(connection)) {
+      const queryResponse = await parseQuery(createParseGameObject(), {
+        objectId: String(connection),
+      })
+      const responseObject = queryResponse[0]
+
+      return responseObject
+    } else {
+      const response = await parseQuery(createParseGameObject(), {
+        users: connection,
+      })
+      return response
+    }
+  }
+  return false
+}
+
+export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
+  const game = await getGame(gameId)
+  const user = getCurrentUser()
+
+  if (game && user && game.get("lastMove") !== user.id) {
+    game.set("fen", gameObject.fen())
+    game.set("pgn", gameObject.pgn())
+    try {
+      await game.save()
+      return true
+    } catch (error) {
+      console.error("error: ", error)
+      return false
+    }
+  }
+  return false
+}
+
 /**
  * initalises parse game with the current user as white
  * @param gameId {string} - id of the game you want to start
@@ -422,27 +456,17 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
  */
 export async function initaliseGame(gameId: string) {
   const game = await getGame(gameId)
-  const gameObject = new Chess()
   const currentUser = getCurrentUser()
 
   if (game && currentUser) {
     const enemy = await getUserById(game.getEnemy(currentUser.id).id)
     const isStarted = game.get("started")
-    if (!isStarted && enemy) {
-      // set gameheader
-      gameObject.header("Event", "Normal")
-      gameObject.header("Site", "OpenChess")
-      gameObject.header("White", currentUser.getUsername())
-      gameObject.header("Black", enemy.getUsername())
 
-      console.log("pgn: ", gameObject.pgn())
-      // set parseobject
-      game.set("started", true)
-      game.set("pgn", gameObject.pgn())
-      game.set("white", currentUser)
+    if (!isStarted && enemy) {
+      const gameObject = await initaliseGameObject(currentUser, enemy)
 
       try {
-        await game.save()
+        await gameObject.save()
         return true
       } catch (error) {
         console.error("error: ", error)
