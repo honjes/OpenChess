@@ -5,6 +5,7 @@ import { Router } from "vue-router"
 import * as localstorage from "./localstorage"
 import moment from "moment"
 import { StoreParseObject } from "../main"
+import { Chess } from "chess.js"
 
 export interface SingeUpUserData {
   username: string
@@ -263,27 +264,6 @@ export async function getGame(
   return false
 }
 
-export async function setWhiteToCurrent(gameId: string): Promise<boolean> {
-  const game = await getGame(gameId)
-  const user = getCurrentUser()
-  if (game && user) {
-    const isStarted = game.get("started")
-    if (!isStarted) {
-      game.set("white", user.id)
-      game.set("started", true)
-
-      try {
-        await game.save()
-        return true
-      } catch (error) {
-        console.error("error: ", error)
-        return false
-      }
-    }
-  }
-  return false
-}
-
 export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
   const game = await getGame(gameId)
   const user = getCurrentUser()
@@ -301,7 +281,7 @@ export async function updateGame(gameId: string, gameObject: any): Promise<boole
   return false
 }
 
-export async function getUserById(userId: string): Promise<ParseGame | false> {
+export async function getUserById(userId: string): Promise<ParseUser | false> {
   if (isLoggedIn()) {
     const response = await parseQuery(Parse.User, {
       objectId: userId,
@@ -426,6 +406,37 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
         })
 
         return friendRequests
+      } catch (error) {
+        console.error("error: ", error)
+        return false
+      }
+    }
+  }
+  return false
+}
+
+export async function initaliseGame(gameId: string) {
+  const game = await getGame(gameId)
+  const gameObject = new Chess()
+  const user = getCurrentUser()
+
+  if (game && user) {
+    const enemy = await getUserById(game.getEnemy(user.id).id)
+    const isStarted = game.get("started")
+    if (!isStarted && enemy) {
+      // set GameHeader
+      gameObject.header("Event", "Normal")
+      gameObject.header("Site", "OpenChess")
+      gameObject.header("White", user.getUsername())
+      gameObject.header("Black", enemy.getUsername())
+
+      game.set("started", true)
+      console.log("pgn: ", gameObject.pgn())
+      game.set("pgn", gameObject.pgn())
+
+      try {
+        await game.save()
+        return true
       } catch (error) {
         console.error("error: ", error)
         return false
