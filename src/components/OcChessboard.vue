@@ -183,12 +183,16 @@ export default {
     },
     loadPosition() {
       let orientation
+      const pgnSplit = this.pgn.split("\n")
 
       if (this.color === "white" || this.color === "black") orientation = this.color
       else orientation = this.orientation
 
-      if (!_.isUndefined(this.pgn)) this.game.load_pgn(this.pgn)
+      // if no moves are made add empty move, else load_pgn wont work
+      if (_.isUndefined(pgnSplit[pgnSplit.length - 1][0])) pgnSplit.push("1. ")
+      if (!_.isUndefined(this.pgn)) this.game.load_pgn(pgnSplit.join("\n"))
       else this.game.load(this.fen)
+
       this.board = Chessground(this.$refs.board, {
         fen: this.game.fen(),
         turnColor: this.toColor(),
