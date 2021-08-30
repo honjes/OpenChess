@@ -415,24 +415,31 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
   return false
 }
 
+/**
+ * initalises parse game with the current user as white
+ * @param gameId {string} - id of the game you want to start
+ * @returns {boolean} - returns false if there was an error else returns true
+ */
 export async function initaliseGame(gameId: string) {
   const game = await getGame(gameId)
   const gameObject = new Chess()
-  const user = getCurrentUser()
+  const currentUser = getCurrentUser()
 
-  if (game && user) {
-    const enemy = await getUserById(game.getEnemy(user.id).id)
+  if (game && currentUser) {
+    const enemy = await getUserById(game.getEnemy(currentUser.id).id)
     const isStarted = game.get("started")
     if (!isStarted && enemy) {
-      // set GameHeader
+      // set gameheader
       gameObject.header("Event", "Normal")
       gameObject.header("Site", "OpenChess")
-      gameObject.header("White", user.getUsername())
+      gameObject.header("White", currentUser.getUsername())
       gameObject.header("Black", enemy.getUsername())
 
-      game.set("started", true)
       console.log("pgn: ", gameObject.pgn())
+      // set parseobject
+      game.set("started", true)
       game.set("pgn", gameObject.pgn())
+      game.set("white", currentUser)
 
       try {
         await game.save()
