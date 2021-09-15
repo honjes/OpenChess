@@ -40,6 +40,7 @@ export default {
   methods: {
     async onChessMove(game) {
       const gameFen = game.fen()
+      const gamePgn = game.pgn()
       const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
       if (
@@ -49,6 +50,7 @@ export default {
         gameFen !== this.currentFen
       ) {
         this.currentFen = gameFen
+        this.currentPgn = gamePgn
         await updateGame(this.id, game)
       }
     },

@@ -271,8 +271,10 @@ export default {
     },
     gameUpdateHandler(object) {
       const newFen = object.get("fen")
+      const newPgn = object.get("pgn")
 
       this.fen = newFen
+      this.pgn = newPgn
       this.loadPosition()
     },
   },
