@@ -7,6 +7,11 @@ import moment from "moment"
 import { StoreParseObject } from "../main"
 import { Chess } from "chess.js"
 
+export enum ChessColor {
+  white = "white",
+  black = "black",
+}
+
 export interface SingeUpUserData {
   username: string
   password: string
@@ -30,6 +35,7 @@ export interface ParseUser extends ParseObject {
 export interface ParseGame extends ParseObject {
   getEnemy?: (id: string) => ParseUser
   isUsersTurn?: (id: string) => boolean
+  getUserColor?: (id: string) => ChessColor
 }
 
 /**
@@ -73,8 +79,8 @@ function createParseGameObject() {
         } else return this.get("white") === userId
       }
     },
-    getUserColor: function (userId: string): string {
-      return this.get("white").id === userId ? "white" : "black"
+    getUserColor: function (userId: string): ChessColor {
+      return this.get("white").id === userId ? ChessColor.white : ChessColor.black
     },
   })
 }
@@ -433,13 +439,30 @@ export async function getGame(
   return false
 }
 
-export async function updateGame(gameId: string, gameObject: any): Promise<boolean> {
+export async function updateGame(
+  gameId: string,
+  gameObject: any,
+  surrender = false
+): Promise<boolean> {
   const game = await getGame(gameId)
   const user = getCurrentUser()
 
   if (game && user && game.get("lastMove") !== user.id) {
+    const userColor = game.getUserColor(user.id)
+    // set Result header
+    if (surrender) {
+      game.set("finished", true)
+      gameObject.header(
+        "Result",
+        `${userColor === ChessColor.white ? "0" : "1"}-${
+          userColor === ChessColor.black ? "0" : "1"
+        }`
+      )
+    }
+
     game.set("fen", gameObject.fen())
     game.set("pgn", gameObject.pgn())
+    //TODO check if game has ended
     try {
       await game.save()
       return true

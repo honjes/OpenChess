@@ -44,6 +44,9 @@ export default {
     if (!_.isUndefined(this.subscription) && this.subscription !== false)
       this.subscription.on("update", this.gameUpdateHandler)
 
+    // emit init event
+    this.$emit("onInitalise", this.game)
+
     return {
       windowWithListener,
     }
@@ -324,6 +327,6 @@ export default {
       }
     },
   },
-  emits: ["onMove", "onFinish"],
+  emits: ["onMove", "onFinish", "onInitalise"],
 }
 </script>

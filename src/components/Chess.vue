@@ -9,7 +9,11 @@
       :pgn="currentPgn"
       @onMove="onChessMove"
       @onFinish="onChessFinish"
+      @onInitalise="onInit"
     />
+  </div>
+  <div class="controlls">
+    <it-button @click="surrenderGame">Surrender</it-button>
   </div>
 </template>
 
@@ -29,6 +33,7 @@ export default {
       gameColor: ref(""),
       currentFen: ref(currentFen),
       currentPgn: ref(props.pgn),
+      currentChessObject: ref(false),
       playing: ref(props.playing),
     }
   },
@@ -38,21 +43,29 @@ export default {
     return {}
   },
   methods: {
-    async onChessMove(game) {
-      const gameFen = game.fen()
-      const gamePgn = game.pgn()
+    async onChessMove(chessObject) {
+      const gameFen = chessObject.fen()
+      const gamePgn = chessObject.pgn()
       const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
       if (
-        game !== false &&
+        chessObject !== false &&
         gameFen !== startFen &&
-        this.game !== false &&
+        this.chessObject !== false &&
         gameFen !== this.currentFen
       ) {
         this.currentFen = gameFen
         this.currentPgn = gamePgn
-        await updateGame(this.id, game)
+        this.currentChessObject = chessObject
+        await updateGame(this.id, chessObject)
       }
+    },
+    async onChessFinish() {
+      this.$emit("gameFinished")
+    },
+    async onInit(chessObject) {
+      this.currentChessObject = chessObject
+      console.log("this.currentChessObject.pgn(): ", this.currentChessObject.pgn())
     },
     async setupGameConnection() {
       const currentUser = getCurrentUser()
@@ -73,8 +86,9 @@ export default {
         }
       }
     },
-    async onChessFinish() {
-      this.$emit("gameFinished")
+    async surrenderGame() {
+      if (this.currentChessObject) await updateGame(this.id, this.currentChessObject, true)
+      else this.$Message.danger({ text: "While surrendering there was an error" })
     },
   },
   components: {
