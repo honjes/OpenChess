@@ -84,11 +84,13 @@ export default {
     async loadGame() {
       const game = await getGame(String(this.gameId))
 
-      // when game is set get Enemy
       if (game) {
+        // get game enemy
         const enemyId = game.getEnemy(this.user.id).id
         const enemy = await getUserById(enemyId)
         if (enemy) this.enemy = enemy
+        // set gameFinished
+        this.gameFinished = game.get("finished")
       }
       this.game = game
     },
