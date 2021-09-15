@@ -3,13 +3,15 @@
     <CreateGame />
     <div class="friends">
       <div class="friends_request">
-        <it-input
-          v-if="showAddFriends"
-          placeholder="Name of the User to add"
-          v-model="addFriendInput"
-        />
-        <span v-if="!showAddFriends">Add Friend</span>
-        <it-icon name="person_add" @click="showAddFriendClickHander" />
+        <it-button @click="showAddFriendClickHander" text>
+          <it-input
+            v-if="showAddFriends"
+            placeholder="Name of the User to add"
+            v-model="addFriendInput"
+          />
+          <span v-if="!showAddFriends">Add Friend</span>
+          <it-icon name="person_add" />
+        </it-button>
       </div>
       <div class="friends_requests" v-for="friend in friendRequests" :key="friend.id">
         <div class="friend">
@@ -62,10 +64,20 @@ export default {
     }
   },
   methods: {
-    async showAddFriendClickHander() {
-      this.showAddFriends = !this.showAddFriends
-      if (!this.showAddFriends && this.addFriendInput !== "") {
-        await sendFriendRequest(this.addFriendInput)
+    async showAddFriendClickHander(ev) {
+      console.log("ev.srcElement: ", ev.srcElement)
+      const srcElement = ev.srcElement
+      const clickedOnInput = srcElement.className === "it-input"
+
+      if (!clickedOnInput) {
+        if (srcElement.tagName === "I" && this.showAddFriends)
+          this.$Message.warning({ text: "Please add the name of the player you want to add" })
+        else {
+          this.showAddFriends = !this.showAddFriends
+          if (!this.showAddFriends && this.addFriendInput !== "") {
+            await sendFriendRequest(this.addFriendInput)
+          }
+        }
       }
     },
   },
@@ -82,6 +94,15 @@ export default {
       align-items: center;
       .it-icon {
         margin-left: 10px;
+      }
+      > button {
+        box-shadow: none;
+        .it-btn-text {
+          align-items: center;
+          i {
+            font-size: 20px;
+          }
+        }
       }
     }
     .friends_list,
