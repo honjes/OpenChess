@@ -74,7 +74,7 @@ function createParseGameObject() {
       }
     },
     getUserColor: function (userId: string): string {
-      return this.get("white") === userId ? "white" : "black"
+      return this.get("white").id === userId ? "white" : "black"
     },
   })
 }
