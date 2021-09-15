@@ -3,7 +3,11 @@
     <CreateGame />
     <div class="friends">
       <div class="friends_request">
-        <it-button @click="showAddFriendClickHander" text>
+        <it-button
+          @click="showAddFriendClickHander"
+          :text="showAddFriends"
+          :outlined="!showAddFriends"
+        >
           <it-input
             v-if="showAddFriends"
             placeholder="Name of the User to add"
@@ -85,6 +89,7 @@ export default {
 </script>
 
 <style lang="scss">
+@import "../static/scss/vars.scss";
 .oc-invite_player {
   .friends {
     margin-top: 15px;
@@ -99,9 +104,13 @@ export default {
         box-shadow: none;
         .it-btn-text {
           align-items: center;
+          color: $default-text-color;
           i {
             font-size: 20px;
           }
+        }
+        &.it-btn--outlined {
+          background: transparent;
         }
       }
     }
