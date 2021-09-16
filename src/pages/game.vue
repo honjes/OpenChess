@@ -37,21 +37,33 @@
         <Chess
           v-if="Boolean(game)"
           :defaultFen="game.get('fen')"
+          :pgn="game.get('pgn')"
           :id="game.id"
           :playing="user.id"
-          @onEnemyMove="onEnemyMove"
+          @onFinish="onChessFinished"
         />
       </div>
     </div>
   </div>
+  <it-modal v-model="finished" :closable-mask="false">
+    <template #body>
+      <p>The game has finished</p>
+      <p>you have {{ winner ? "won" : "lost" }} the game</p>
+    </template>
+    <template #actions>
+      <it-button @click="rematch">Rematch</it-button>
+      <it-button @click="backToHome">Back to Homepage</it-button>
+    </template>
+  </it-modal>
 </template>
 
 <script lang="ts">
 import Chess from "../components/Chess.vue"
 import { ref } from "vue"
-import { getGame, getUserById, isLoggedIn } from "../util/parse"
+import { createGameWithCurrent, getGame, getUserById, isLoggedIn } from "../util/parse"
 import Avatar from "../components/Avatar.vue"
 import { useRoute } from "vue-router"
+
 export default {
   name: "Game",
   setup() {
@@ -62,6 +74,8 @@ export default {
       gameId: ref(paramGameId),
       game: ref(false),
       enemy: ref({}),
+      finished: ref(false),
+      winner: ref(false),
     }
   },
   async mounted() {
@@ -72,16 +86,27 @@ export default {
     async loadGame() {
       const game = await getGame(String(this.gameId))
 
-      // when game is set get Enemy
       if (game) {
+        // get game enemy
         const enemyId = game.getEnemy(this.user.id).id
         const enemy = await getUserById(enemyId)
-        this.enemy = enemy
+        if (enemy) this.enemy = enemy
+        // set finished
+        this.finished = game.get("finished")
       }
       this.game = game
     },
-    async onEnemyMove() {
-      await this.loadGame()
+    async onChessFinished(userHasWon: boolean) {
+      this.finished = true
+      this.winner = userHasWon
+    },
+    async rematch() {
+      const newGame = await createGameWithCurrent(this.enemy.getUsername())
+      if (newGame) this.$router.push({ name: "game", params: { gameId: newGame } })
+      else this.$message.danger({ text: "Error while rematching" })
+    },
+    backToHome() {
+      this.$router.push({ name: "home" })
     },
   },
   computed: {

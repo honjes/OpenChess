@@ -1,14 +1,14 @@
 <template>
   <div id="oc-home_site">
     <div class="home_content">
-      <div class="left"><CreateGame /></div>
+      <div class="left"><InvitePlayers /></div>
       <div class="games"><CurrentGames /></div>
     </div>
   </div>
 </template>
 <script lang="ts">
 import CurrentGames from "../components/CurrentGames.vue"
-import CreateGame from "../components/CreateGame.vue"
+import InvitePlayers from "../components/InvitePlayers.vue"
 import Nav from "../components/Nav.vue"
 import { isLoggedIn } from "../util/parse"
 
@@ -19,7 +19,7 @@ export default {
   components: {
     Nav,
     CurrentGames,
-    CreateGame,
+    InvitePlayers,
   },
 }
 </script>

@@ -35,6 +35,7 @@ export default {
   setup(props) {
     return {
       ...props,
+      text: ref(props.text),
       extend: ref(false),
       extendTextWidth: ref(0),
       firstExtend: true,
