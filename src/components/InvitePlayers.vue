@@ -3,30 +3,45 @@
     <CreateGame />
     <div class="friends">
       <div class="friends_request">
-        <it-button
-          @click="showAddFriendClickHander"
-          :text="showAddFriends"
-          :outlined="!showAddFriends"
-        >
+        <it-button @click="addFriendClickHander" :text="showAddFriends" :outlined="!showAddFriends">
           <it-input
             v-if="showAddFriends"
             placeholder="Name of the User to add"
-            v-model="addFriendInput"
+            :value="addFriendInput"
+            @input="updateFriendInput"
           />
           <span v-if="!showAddFriends">Add Friend</span>
-          <it-icon name="person_add" />
+          <it-icon name="person_add" class="material-icons-two-tone" />
         </it-button>
       </div>
       <div class="friends_requests" v-for="friend in friendRequests" :key="friend.id">
+        <h3>Friend request</h3>
         <div class="friend">
-          <span>{{ friend.get("username") }}</span>
-          <Avatar :color="friend.get('color')" :text="friend.get('username')" />
+          <span>{{ friend.getFriend().get("username") }}</span>
+          <div>
+            <span class="handle_request">
+              <it-button
+                icon="cancel"
+                text
+                @click="handleFriendRequest(friend.getFriend().get('username'), false)"
+              />
+              <it-button
+                icon="check_circle"
+                text
+                @click="() => handleFriendRequest(friend.getFriend().get('username'), true)"
+              />
+            </span>
+            <Avatar
+              :color="friend.getFriend().get('color')"
+              :text="friend.getFriend().get('username')"
+            />
+          </div>
         </div>
       </div>
       <it-divider v-if="friendRequests.length > 0" />
       <div class="showWrapper" v-if="friends.length > 0">
-        <div class="friends_list" v-for="friend in friends" :key="friend.id">
-          <div class="friend">
+        <div class="friends_list">
+          <div class="friend" v-for="friend in friends" :key="friend.id">
             <span>{{ friend.get("username") }}</span>
             <Avatar :color="friend.get('color')" :text="friend.get('username')" />
           </div>
@@ -40,7 +55,13 @@
 import CreateGame from "./CreateGame.vue"
 import Avatar from "./Avatar.vue"
 import { ref } from "vue"
-import { getCurrentUser, sendFriendRequest, currentFriendRequests, getFriends } from "../util/parse"
+import {
+  getCurrentUser,
+  sendFriendRequest,
+  answerFriendRequest,
+  getFriends,
+  getFriendRequest,
+} from "../util/parse"
 
 export default {
   name: "InvitePlayers",
@@ -52,29 +73,21 @@ export default {
     return {
       friends: ref([]),
       showAddFriends: ref(false),
-      addFriendInput: ref(""),
+      addFriendInput: "",
       invitePlayerModal: ref(false),
       friendRequests: ref([]),
     }
   },
   async mounted() {
-    const user = getCurrentUser()
-    if (user) {
-      const newFriends = await getFriends(user.id)
-      if (newFriends && newFriends.length > 0) this.friends = newFriends
-
-      const friends_requests = await currentFriendRequests()
-      if (friends_requests && friends_requests.length > 0) this.friendRequests = friends_requests
-    }
+    await this.updateFriends()
   },
   methods: {
-    async showAddFriendClickHander(ev) {
-      console.log("ev.srcElement: ", ev.srcElement)
+    async addFriendClickHander(ev) {
       const srcElement = ev.srcElement
       const clickedOnInput = srcElement.className === "it-input"
 
       if (!clickedOnInput) {
-        if (srcElement.tagName === "I" && this.showAddFriends)
+        if (srcElement.tagName === "I" && this.showAddFriends && this.addFriendInput === "")
           this.$Message.warning({ text: "Please add the name of the player you want to add" })
         else {
           this.showAddFriends = !this.showAddFriends
@@ -83,6 +96,28 @@ export default {
           }
         }
       }
+    },
+    async handleFriendRequest(name: string, acceptRequest: boolean): Promise<void> {
+      const request = await answerFriendRequest(name, acceptRequest)
+      if (request) this.$Message.success("Friend Added")
+      else this.$Message.error("Couldn't add Friend")
+      // update friendList
+      await this.updateFriends()
+    },
+    async updateFriends() {
+      const user = getCurrentUser()
+      if (user) {
+        const newFriends = await getFriends()
+        if (newFriends && newFriends.length > 0) this.friends = newFriends
+
+        const friends_requests = await getFriendRequest(user)
+        // request Friends
+        const friendRequestIds = friends_requests.map(request => request.objectId)
+        if (friends_requests) this.friendRequests = friends_requests
+      }
+    },
+    async updateFriendInput(ev) {
+      this.addFriendInput = ev.currentTarget.value
     },
   },
 }
@@ -97,6 +132,7 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
+
       .it-icon {
         margin-left: 10px;
       }
@@ -121,6 +157,25 @@ export default {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 10px;
+
+        > div {
+          display: flex;
+          align-items: center;
+          .handle_request {
+            margin-right: 30px;
+            display: flex;
+
+            .it-icon {
+              font-size: 30px;
+              margin: 0;
+            }
+          }
+        }
+      }
+      > h3 {
+        text-align: left;
+        margin-bottom: 0;
       }
     }
   }

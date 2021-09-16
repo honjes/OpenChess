@@ -12,11 +12,23 @@ export enum ChessColor {
   black = "black",
 }
 
+export enum FriendRequestStatus {
+  pending = "pending",
+  accepted = "accepted",
+  rejected = "rejected",
+}
+
+export interface AnyObject {
+  [index: string]: any
+}
+
 export interface SingeUpUserData {
   username: string
   password: string
   email: string
 }
+
+// Parse interfaces
 
 export interface ParseObject {
   id: string
@@ -25,6 +37,7 @@ export interface ParseObject {
   add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
   save?: () => Promise<ParseObject>
+  new (): any
   [index: string]: string | number | undefined | ((index?: string, index2?: any) => any)
 }
 
@@ -37,6 +50,8 @@ export interface ParseGame extends ParseObject {
   isUsersTurn?: (id: string) => boolean
   getUserColor?: (id: string) => ChessColor
 }
+
+export interface ParseFriendRequest extends ParseObject {}
 
 /**
  * Initalises the Parse connection and adds default Object
@@ -81,6 +96,22 @@ function createParseGameObject() {
     },
     getUserColor: function (userId: string): ChessColor {
       return this.get("white").id === userId ? ChessColor.white : ChessColor.black
+    },
+  })
+}
+
+function createParseFriendRequestObject(): ParseFriendRequest {
+  return Parse.Object.extend("FriendRequests", {
+    getFriend(): false | any {
+      const current = getCurrentUser()
+      const from = this.get("fromUser")
+      const to = this.get("toUser")
+
+      if (current) {
+        if (from.id === current.id) return to
+        if (to.id === current.id) return from
+      }
+      return false
     },
   })
 }
@@ -290,15 +321,17 @@ export async function sendVerificationEmail(): Promise<boolean> {
 }
 
 export async function sendFriendRequest(friendName: string): Promise<boolean> {
-  const current = getCurrentUser()
+  const currentUser = getCurrentUser()
   const newFriend = await getUserByName(friendName)
+  const FriendRequest = createParseFriendRequestObject()
+  const friendRequest = new FriendRequest()
 
-  if (current && newFriend) {
-    const friendsRel = current.relation("friends")
-    friendsRel.add(newFriend)
+  if (currentUser && newFriend && friendRequest) {
+    friendRequest.set("fromUser", currentUser)
+    friendRequest.set("toUser", newFriend)
 
     try {
-      await current.save()
+      await friendRequest.save()
       return true
     } catch (error) {
       console.error(error)
@@ -307,8 +340,100 @@ export async function sendFriendRequest(friendName: string): Promise<boolean> {
   return false
 }
 
-export async function getFriends(userId: string): Promise<false | ParseUser[]> {
-  const user = await getUserById(userId)
+/**
+ * removes friends from current user
+ * @param friendName {string} - username of the friend to remove from friendlist
+ * @returns {Promise<boolean>} returns true if successfull else false
+ */
+export async function answerFriendRequest(
+  friendName: string,
+  acceptRequest: boolean
+): Promise<boolean> {
+  const currentUser = getCurrentUser()
+  const friend = await getUserByName(friendName)
+
+  if (currentUser && friend) {
+    let friendRequest = createParseFriendRequestObject()
+    friendRequest = new friendRequest()
+
+    // query
+    const innerQuery = new Parse.Query(Parse.User)
+    innerQuery.equalTo("username", friendName)
+
+    const fromQuery = new Parse.Query(friendRequest)
+    fromQuery.equalTo("fromUser", currentUser)
+    fromQuery.matchesQuery("toUser", innerQuery)
+
+    const toQuery = new Parse.Query(friendRequest)
+    toQuery.equalTo("toUser", currentUser)
+    toQuery.matchesQuery("fromUser", innerQuery)
+
+    const query = Parse.Query.or(fromQuery, toQuery)
+
+    // edeting
+    const response = await query.find()
+
+    if (response.length > 0) {
+      // update friend request
+      const friendRequest = response[0]
+      friendRequest.set(
+        "status",
+        acceptRequest ? FriendRequestStatus.accepted : FriendRequestStatus.rejected
+      )
+      // update user
+      const userFriends = currentUser.relation("friends")
+      userFriends.add(friend)
+
+      try {
+        await friendRequest.save()
+        await currentUser.save()
+
+        return true
+      } catch (error) {
+        console.error("error: ", error)
+        return false
+      }
+    }
+  }
+  return false
+}
+
+/**
+ *
+ * @param toUser
+ * @param fromUser
+ * @returns returns all friendrequest matching the given params
+ */
+export async function getFriendRequest(
+  toUser: ParseUser,
+  fromUser?: ParseUser
+): Promise<ParseUser[]> {
+  const friendRequest = createParseFriendRequestObject()
+  const requestObject = new friendRequest()
+
+  // query
+  const toQuery = new Parse.Query(requestObject)
+  toQuery.equalTo("toUser", toUser)
+  toQuery.equalTo("status", FriendRequestStatus.pending)
+  if (!_.isUndefined(fromUser)) toQuery.equalTo("fromUser", fromUser)
+
+  const fromQuery = new Parse.Query(requestObject)
+  fromQuery.equalTo("fromUser", toUser)
+  fromQuery.equalTo("status", FriendRequestStatus.pending)
+  if (!_.isUndefined(fromUser)) toQuery.equalTo("toUser", fromUser)
+
+  const query = Parse.Query.or(toQuery, fromQuery)
+  query.include(["toUser", "fromUser"])
+  const result = await query.find()
+
+  return result
+}
+
+/**
+ * @returns returns friends from the current user
+ */
+export async function getFriends(): Promise<false | ParseUser[]> {
+  const user = getCurrentUser()
 
   if (user) {
     const friendRel = user.relation("friends")
@@ -331,7 +456,7 @@ export async function currentFriendRequests(): Promise<false | ParseUser[]> {
   const friendQuery = new Parse.Query(Parse.User)
 
   if (current) {
-    const currentFriends = await getFriends(current.id)
+    const currentFriends = await getFriends()
 
     if (currentFriends) {
       // applie filter to Querys

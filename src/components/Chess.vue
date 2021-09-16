@@ -65,7 +65,6 @@ export default {
     },
     async onInit(chessObject) {
       this.currentChessObject = chessObject
-      console.log("this.currentChessObject.pgn(): ", this.currentChessObject.pgn())
     },
     async setupGameConnection() {
       const currentUser = getCurrentUser()
