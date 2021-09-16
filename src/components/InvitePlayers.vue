@@ -43,7 +43,12 @@
         <div class="friends_list">
           <div class="friend" v-for="friend in friends" :key="friend.id">
             <span>{{ friend.get("username") }}</span>
-            <Avatar :color="friend.get('color')" :text="friend.get('username')" />
+            <div class="userHandle">
+              <it-tag class="challenge" @click="challengeFriend(friend.get('username'))"
+                >Challenge</it-tag
+              >
+              <Avatar :color="friend.get('color')" :text="friend.get('username')" />
+            </div>
           </div>
         </div>
       </div>
@@ -61,6 +66,7 @@ import {
   answerFriendRequest,
   getFriends,
   getFriendRequest,
+  createGameWithCurrent,
 } from "../util/parse"
 
 export default {
@@ -118,6 +124,12 @@ export default {
     },
     async updateFriendInput(ev) {
       this.addFriendInput = ev.currentTarget.value
+    },
+    async challengeFriend(name: string) {
+      const newGame = await createGameWithCurrent(name)
+
+      if (newGame) this.$router.push({ name: "game", params: { gameId: newGame } })
+      else this.$message.danger({ text: "Error while rematching" })
     },
   },
 }
