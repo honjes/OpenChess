@@ -1,6 +1,6 @@
 {
   "name": "open-chess",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "start": "npm run run-build && npm run serve",
