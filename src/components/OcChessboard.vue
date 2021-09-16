@@ -39,11 +39,12 @@ export default {
     })
     this.setGameWidth()
 
-    // Setup Subscription to update game on move
-    this.subscription = await getGameSubscription(this.gameId)
-    if (!_.isUndefined(this.subscription) && this.subscription !== false)
-      this.subscription.on("update", this.gameUpdateHandler)
-
+    // setup subscription to update game on move
+    if (!this.game.game_over()) {
+      this.subscription = await getGameSubscription(this.gameId)
+      if (!_.isUndefined(this.subscription) && this.subscription !== false)
+        this.subscription.on("update", this.gameUpdateHandler)
+    }
     // emit init event
     this.$emit("onInitalise", this.game)
 
@@ -124,17 +125,33 @@ export default {
     },
     changeTurn() {
       return (orig, dest, metadata) => {
+        let orientation
         if (this.isPromotion(orig, dest)) {
           this.promoteTo = this.onPromotion()
         }
         this.game.move({ from: orig, to: dest, promotion: this.promoteTo }) // promote to queen for simplicity
-        this.board.set({
-          fen: this.game.fen(),
-          turnColor: this.toColor(),
-          movable: {
-            ...this.getMovable(),
-          },
-        })
+
+        if (this.color === "white" || this.color === "black") orientation = this.color
+        else orientation = this.orientation
+
+        if (!_.isUndefined(this.$refs.board)) {
+          this.board = Chessground(this.$refs.board, {
+            fen: this.game.fen(),
+            turnColor: this.toColor(),
+            movable: {
+              ...this.getMovable(),
+              free: this.free,
+            },
+            orientation: orientation,
+          })
+          this.board.set({
+            fen: this.game.fen(),
+            turnColor: this.toColor(),
+            movable: {
+              ...this.getMovable(),
+            },
+          })
+        }
         this.calculatePromotions()
         this.afterMove()
       }
@@ -145,7 +162,10 @@ export default {
 
       this.$emit("onMove", this.game)
       // check if game is finished
-      if (this.game.game_over) this.$emit("onFinish", this.game)
+      if (this.game.game_over()) {
+        this.$emit("onFinish", this.game)
+        if (!_.isUndefined(this.subscription)) this.subscription.unsubscribe()
+      }
     },
     countThreats(color) {
       let threats = {}

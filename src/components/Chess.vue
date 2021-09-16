@@ -60,8 +60,10 @@ export default {
         await updateGame(this.id, chessObject)
       }
     },
-    async onChessFinish() {
-      this.$emit("gameFinished")
+    async onChessFinish(chessObject) {
+      const turn = chessObject.turn()
+      this.$emit("onFinish", turn === this.gameColor[0] ? false : true)
+      await updateGame(this.id, chessObject)
     },
     async onInit(chessObject) {
       this.currentChessObject = chessObject

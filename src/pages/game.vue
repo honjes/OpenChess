@@ -45,9 +45,10 @@
       </div>
     </div>
   </div>
-  <it-modal v-model="gameFinished">
+  <it-modal v-model="finished" :closable-mask="false">
     <template #body>
       <p>The game has finished</p>
+      <p>you have {{ winner ? "won" : "lost" }} the game</p>
     </template>
     <template #actions>
       <it-button @click="rematch">Rematch</it-button>
@@ -73,7 +74,8 @@ export default {
       gameId: ref(paramGameId),
       game: ref(false),
       enemy: ref({}),
-      gameFinished: ref(false),
+      finished: ref(false),
+      winner: ref(false),
     }
   },
   async mounted() {
@@ -89,13 +91,14 @@ export default {
         const enemyId = game.getEnemy(this.user.id).id
         const enemy = await getUserById(enemyId)
         if (enemy) this.enemy = enemy
-        // set gameFinished
-        this.gameFinished = game.get("finished")
+        // set finished
+        this.finished = game.get("finished")
       }
       this.game = game
     },
-    async onChessFinished() {
+    async onChessFinished(userHasWon: boolean) {
       this.finished = true
+      this.winner = userHasWon
     },
     async rematch() {
       const newGame = await createGameWithCurrent(this.enemy.getUsername())

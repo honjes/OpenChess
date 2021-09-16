@@ -2,7 +2,7 @@
   <div class="oc-invite_player">
     <CreateGame />
     <div class="friends">
-      <div class="friends_request">
+      <div class="request_friend">
         <it-button @click="addFriendClickHander" :text="showAddFriends" :outlined="!showAddFriends">
           <it-input
             v-if="showAddFriends"
@@ -140,7 +140,7 @@ export default {
 .oc-invite_player {
   .friends {
     margin-top: 15px;
-    .friends_request {
+    .request_friend {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -174,6 +174,7 @@ export default {
         > div {
           display: flex;
           align-items: center;
+
           .handle_request {
             margin-right: 30px;
             display: flex;
@@ -181,6 +182,12 @@ export default {
             .it-icon {
               font-size: 30px;
               margin: 0;
+            }
+          }
+          &.userHandle .it-tag {
+            margin-right: 10px;
+            &:hover {
+              cursor: pointer;
             }
           }
         }

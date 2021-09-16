@@ -583,6 +583,13 @@ export async function updateGame(
           userColor === ChessColor.black ? "0" : "1"
         }`
       )
+    } else if (gameObject.game_over()) {
+      const turn = gameObject.turn()
+      game.set("finished", true)
+      gameObject.header(
+        "Result",
+        `${turn === ChessColor.white[0] ? "0" : "1"}-${turn === ChessColor.black[0] ? "0" : "1"}`
+      )
     }
 
     game.set("fen", gameObject.fen())
