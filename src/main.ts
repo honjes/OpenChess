@@ -16,6 +16,8 @@ import {
 } from "./util/parse"
 import { createStore } from "vuex"
 import config from "./config"
+import * as Sentry from "@sentry/vue"
+import { Integrations } from "@sentry/tracing"
 
 const routes: RouteRecordRaw[] = [
   {
@@ -44,10 +46,12 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
-if(config.debug) routes.push({
-  path: "/playground",
-  name: "playground",
-  component: defineAsyncComponent(() => import("./pages/playground.vue")),})
+if (config.debug)
+  routes.push({
+    path: "/playground",
+    name: "playground",
+    component: defineAsyncComponent(() => import("./pages/playground.vue")),
+  })
 
 const router = createRouter({
   history: createWebHistory(),
@@ -145,5 +149,25 @@ const store = createStore({
     },
   },
 })
+const app = createApp(App)
 
-createApp(App).use(Equal).use(store).use(router).mount("#app")
+console.log(process.env.NODE_ENV)
+
+if (process.env.NODE_ENV === "production") {
+  Sentry.init({
+    app,
+    dsn: "https://b5b860a1767043b9a39ec5e788ccf582@o497145.ingest.sentry.io/5963248",
+    integrations: [
+      new Integrations.BrowserTracing({
+        routingInstrumentation: Sentry.vueRouterInstrumentation(router),
+        tracingOrigins: ["localhost", "my-site-url.com", /^\//],
+      }),
+    ],
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 1.0,
+  })
+}
+
+app.use(Equal).use(store).use(router).mount("#app")
