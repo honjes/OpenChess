@@ -14,51 +14,46 @@ import { ref } from "vue"
 
 export default {
   name: "chessboard",
-  props: {
-    fen: {
-      type: String,
-    },
-    free: {
-      type: Boolean,
-      default: false,
-    },
-    showThreats: {
-      type: Boolean,
-      default: false,
-    },
-    onPromotion: {
-      type: Function,
-      default: () => "q",
-    },
-    orientation: {
-      type: String,
-      default: "white",
-    },
-    // Custom Params
-    color: {
-      type: String,
-      default: "",
-    },
-    gameId: {
-      type: String,
-      requried: true,
-    },
-    pgn: {
-      type: String,
-      required: true,
-    },
+  setup(props) {
+    return {
+      windowWith: ref(0),
+      gameWidth: ref("700px"),
+      game: new Chess(),
+      fen: ref(props.fen),
+      pgn: ref(props.pgn),
+      board: null,
+      promotions: [],
+      promoteTo: "q",
+      color: ref(props.color),
+      gameId: ref(props.gameId),
+      finished: ref(false),
+    }
   },
-  watch: {
-    orientation(orientation) {
-      this.orientation = orientation
-      this.loadPosition()
-    },
-    showThreats(st) {
-      this.showThreats = st
-      if (this.showThreats) {
-        this.paintThreats()
+  async mounted() {
+    this.loadPosition()
+
+    const windowWithListener = this.$store.subscribe((mutation, state) => {
+      if (mutation.type === "refreshWindowSize") {
+        this.setGameWidth()
       }
-    },
+    })
+    this.setGameWidth()
+
+    // setup subscription to update game on move
+    if (!this.game.game_over()) {
+      this.subscription = await getGameSubscription(this.gameId)
+      if (!_.isUndefined(this.subscription) && this.subscription !== false)
+        this.subscription.on("update", this.gameUpdateHandler)
+    }
+    // emit init event
+    this.$emit("onInitalise", this.game)
+
+    return {
+      windowWithListener,
+    }
+  },
+  onBeforeUnmount() {
+    this.subscription.unsubscribe()
   },
   methods: {
     setGameWidth() {
@@ -130,28 +125,47 @@ export default {
     },
     changeTurn() {
       return (orig, dest, metadata) => {
+        let orientation
         if (this.isPromotion(orig, dest)) {
           this.promoteTo = this.onPromotion()
         }
         this.game.move({ from: orig, to: dest, promotion: this.promoteTo }) // promote to queen for simplicity
-        this.board.set({
-          fen: this.game.fen(),
-          turnColor: this.toColor(),
-          movable: {
-            ...this.getMovable(),
-          },
-        })
+
+        if (this.color === "white" || this.color === "black") orientation = this.color
+        else orientation = this.orientation
+
+        if (!_.isUndefined(this.$refs.board)) {
+          this.board = Chessground(this.$refs.board, {
+            fen: this.game.fen(),
+            turnColor: this.toColor(),
+            movable: {
+              ...this.getMovable(),
+              free: this.free,
+            },
+            orientation: orientation,
+          })
+          this.board.set({
+            fen: this.game.fen(),
+            turnColor: this.toColor(),
+            movable: {
+              ...this.getMovable(),
+            },
+          })
+        }
         this.calculatePromotions()
         this.afterMove()
       }
     },
     afterMove() {
-      if (this.showThreats) {
-        this.paintThreats()
-      }
+      if (this.showThreats) this.paintThreats()
       this.paintCrucialThreats()
 
       this.$emit("onMove", this.game)
+      // check if game is finished
+      if (this.game.game_over()) {
+        this.$emit("onFinish", this.game)
+        if (!_.isUndefined(this.subscription)) this.subscription.unsubscribe()
+      }
     },
     countThreats(color) {
       let threats = {}
@@ -183,12 +197,16 @@ export default {
     },
     loadPosition() {
       let orientation
+      const pgnSplit = this.pgn.split("\n")
 
       if (this.color === "white" || this.color === "black") orientation = this.color
       else orientation = this.orientation
 
-      if (!_.isUndefined(this.pgn)) this.game.load_pgn(this.pgn)
+      // if no moves are made add empty move, else load_pgn wont work
+      if (_.isUndefined(pgnSplit[pgnSplit.length - 1][0])) pgnSplit.push("1. ")
+      if (!_.isUndefined(this.pgn)) this.game.load_pgn(pgnSplit.join("\n"))
       else this.game.load(this.fen)
+
       this.board = Chessground(this.$refs.board, {
         fen: this.game.fen(),
         turnColor: this.toColor(),
@@ -276,47 +294,59 @@ export default {
     },
     gameUpdateHandler(object) {
       const newFen = object.get("fen")
+      const newPgn = object.get("pgn")
 
       this.fen = newFen
+      this.pgn = newPgn
       this.loadPosition()
     },
   },
-  setup(props) {
-    return {
-      windowWith: ref(0),
-      gameWidth: ref("700px"),
-      game: new Chess(),
-      fen: ref(props.fen),
-      pgn: ref(props.pgn),
-      board: null,
-      promotions: [],
-      promoteTo: "q",
-      color: ref(props.color),
-      gameId: ref(props.gameId),
-    }
+  props: {
+    fen: {
+      type: String,
+    },
+    free: {
+      type: Boolean,
+      default: false,
+    },
+    showThreats: {
+      type: Boolean,
+      default: false,
+    },
+    onPromotion: {
+      type: Function,
+      default: () => "q",
+    },
+    orientation: {
+      type: String,
+      default: "white",
+    },
+    // Custom Params
+    color: {
+      type: String,
+      default: "",
+    },
+    gameId: {
+      type: String,
+      requried: true,
+    },
+    pgn: {
+      type: String,
+      required: true,
+    },
   },
-  async mounted() {
-    this.loadPosition()
-
-    const windowWithListener = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "refreshWindowSize") {
-        this.setGameWidth()
+  watch: {
+    orientation(orientation) {
+      this.orientation = orientation
+      this.loadPosition()
+    },
+    showThreats(st) {
+      this.showThreats = st
+      if (this.showThreats) {
+        this.paintThreats()
       }
-    })
-    this.setGameWidth()
-
-    // Setup Subscription to update when Game Object updates
-    this.subscription = await getGameSubscription(this.gameId)
-    if (!_.isUndefined(this.subscription) && this.subscription !== false)
-      this.subscription.on("update", this.gameUpdateHandler)
-
-    return {
-      windowWithListener,
-    }
+    },
   },
-  onBeforeUnmount() {
-    this.subscription.unsubscribe()
-  },
-  emits: ["onMove"],
+  emits: ["onMove", "onFinish", "onInitalise"],
 }
 </script>

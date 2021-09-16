@@ -8,15 +8,20 @@
       :fen="currentFen"
       :pgn="currentPgn"
       @onMove="onChessMove"
+      @onFinish="onChessFinish"
+      @onInitalise="onInit"
     />
+  </div>
+  <div class="controlls">
+    <it-button @click="surrenderGame">Surrender</it-button>
   </div>
 </template>
 
 <script lang="ts">
 import chessboard from "./OcChessboard.vue"
 import { ref } from "vue"
-import { getGame, setWhiteToCurrent, updateGame } from "../util/parse"
-import _, { isUndefined } from "lodash"
+import { getCurrentUser, getGame, initaliseGame, updateGame } from "../util/parse"
+import _ from "lodash"
 
 export default {
   setup(props) {
@@ -27,6 +32,8 @@ export default {
       id: props.id,
       gameColor: ref(""),
       currentFen: ref(currentFen),
+      currentPgn: ref(props.pgn),
+      currentChessObject: ref(false),
       playing: ref(props.playing),
     }
   },
@@ -36,29 +43,41 @@ export default {
     return {}
   },
   methods: {
-    async onChessMove(game) {
-      const gameFen = game.fen()
+    async onChessMove(chessObject) {
+      const gameFen = chessObject.fen()
+      const gamePgn = chessObject.pgn()
       const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
       if (
-        game !== false &&
+        chessObject !== false &&
         gameFen !== startFen &&
-        this.game !== false &&
+        this.chessObject !== false &&
         gameFen !== this.currentFen
       ) {
         this.currentFen = gameFen
-        await updateGame(this.id, game)
+        this.currentPgn = gamePgn
+        this.currentChessObject = chessObject
+        await updateGame(this.id, chessObject)
       }
     },
+    async onChessFinish(chessObject) {
+      const turn = chessObject.turn()
+      this.$emit("onFinish", turn === this.gameColor[0] ? false : true)
+      await updateGame(this.id, chessObject)
+    },
+    async onInit(chessObject) {
+      this.currentChessObject = chessObject
+    },
     async setupGameConnection() {
-      if (!isUndefined(this.id) && this.id !== "") {
+      const currentUser = getCurrentUser()
+      if (!_.isUndefined(this.id) && this.id !== "" && currentUser) {
         this.game = await getGame(this.id)
         let newGameColor = ""
 
-        if (this.game.get("white") === "" || this.game.get("white") === " ") {
-          await setWhiteToCurrent(this.id)
+        if (_.isUndefined(this.game.get("white"))) {
+          await initaliseGame(this.id)
           newGameColor = "white"
-        } else if (this.game.get("white") === this.playing) newGameColor = "white"
+        } else if (this.game.get("white").id === currentUser.id) newGameColor = "white"
         else newGameColor = "black"
 
         this.gameColor = newGameColor
@@ -67,6 +86,10 @@ export default {
           this.currentPgn = this.game.get("pgn")
         }
       }
+    },
+    async surrenderGame() {
+      if (this.currentChessObject) await updateGame(this.id, this.currentChessObject, true)
+      else this.$Message.danger({ text: "While surrendering there was an error" })
     },
   },
   components: {
@@ -81,6 +104,9 @@ export default {
       type: String,
       default: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     },
+    pgn: {
+      type: String,
+    },
     playing: {
       type: String,
       required: true,
@@ -90,6 +116,7 @@ export default {
       required: true,
     },
   },
+  emits: ["onFinish"],
 }
 </script>
 

@@ -3,14 +3,21 @@
     <p style="margin: 10px 0">Current Games:</p>
     <div v-if="userGames.length > 0">
       <div
-        v-for="game in userGames"
+        v-for="game in filteredUserGames"
         :key="game.objectId"
         class="single_game oc-clickable oc-hover"
         @click="toGamePage(game.id)"
       >
-        <it-tag class="turn_tag" type="warning" v-if="game.isUsersTurn(storeUser.username)">
-          Your Turn
-        </it-tag>
+        <div class="tags">
+          <it-tag class="finish_tag" v-if="game.get('finished')">Finished</it-tag>
+          <it-tag
+            class="turn_tag"
+            type="warning"
+            v-if="!game.get('finished') && game.isUsersTurn(storeUser.username)"
+          >
+            Your Turn
+          </it-tag>
+        </div>
         <span class="oc-disabled" style="margin-right: 10px">vs</span>
         <span v-if="game && getEnemyName(game.getEnemy(currentUser.id).id) !== ''">
           <Avatar
@@ -32,11 +39,12 @@ import { getCurrentUser, getGame, getUserById } from "../util/parse"
 import Avatar from "./Avatar.vue"
 
 export default {
-  setup() {
+  setup(props) {
     return {
       userGames: ref([]),
       currentUser: null,
       enemys: ref([]),
+      showFinished: ref(props.showFinished),
     }
   },
   computed: {
@@ -45,6 +53,14 @@ export default {
     },
     storeUser() {
       return this.$store.state.user
+    },
+    filteredUserGames() {
+      const games = this.userGames
+
+      return games.filter(game => {
+        if (!this.showFinished && game.get("finished")) return false
+        return true
+      })
     },
   },
   async mounted() {
@@ -95,6 +111,12 @@ export default {
   components: {
     Avatar,
   },
+  props: {
+    showFinished: {
+      type: Boolean,
+      default: false,
+    },
+  },
 }
 </script>
 
@@ -109,7 +131,7 @@ export default {
     align-items: center;
     padding: 7px 0;
 
-    .turn_tag {
+    .tags {
       margin-right: 10px;
     }
   }

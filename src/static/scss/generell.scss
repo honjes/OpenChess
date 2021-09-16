@@ -16,6 +16,9 @@ body {
   .it-modal-footer {
     background-color: $default-background-color;
   }
+  .it-btn--neutral.it-btn--text {
+    color: $default-text-color;
+  }
 
   #app {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
