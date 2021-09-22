@@ -82,19 +82,16 @@ function createParseGameObject() {
       return enemy
     },
     isUsersTurn: function (userId: string): boolean {
-      const lastMoveUser = this.get("lastMove")
+      const chess = Chess()
+      const pgn = this.get("pgn")
+      const whiteId = this.get("white").id
 
-      if (!_.isUndefined(lastMoveUser) && lastMoveUser !== " " && lastMoveUser !== "")
-        return lastMoveUser !== userId
-      else {
-        const history = this.get("moveHistory")
-
-        if (!_.isUndefined(history) && history.length > 0) {
-          const lastMove = history[history.length - 1]
-
-          return lastMove.user !== userId
-        } else return this.get("white") === userId
+      chess.load_pgn(pgn)
+      const curColor = chess.turn() === "w" ? ChessColor.white : ChessColor.black
+      if (whiteId === userId) {
+        return curColor === ChessColor.white ? true : false
       }
+      return curColor === ChessColor.black ? true : false
     },
     getUserColor: function (userId: string): ChessColor {
       return this.get("white").id === userId ? ChessColor.white : ChessColor.black
