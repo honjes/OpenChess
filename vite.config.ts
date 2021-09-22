@@ -4,6 +4,12 @@ import { VitePWA } from "vite-plugin-pwa"
 import replace from "@rollup/plugin-replace"
 import fs from "fs"
 
+/**
+  mode: "development",
+  base: "/",
+  registerType: process.env.CLAIMS === "true" ? "autoUpdate" : undefined,
+*/
+
 const config: UserConfig = {
   // base: process.env.BASE_URL || 'https://github.com/',
   build: {
@@ -12,13 +18,11 @@ const config: UserConfig = {
   plugins: [
     Vue(),
     VitePWA({
-      mode: "development",
-      base: "/",
-      registerType: process.env.CLAIMS === "true" ? "autoUpdate" : undefined,
-      includeAssets: ["favicon.svg"], // <== don't add slash, for testing
+      includeAssets: ["favicon.svg", "favicon.ico", "robots.txt", "apple-touch-icon.png"], // <== don't add slash, for testing
       manifest: {
         name: "Open-Chess",
         short_name: "Open-Chess",
+        description: "Open Source Chess app",
         theme_color: "#ffffff",
         icons: [
           {

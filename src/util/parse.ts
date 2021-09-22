@@ -29,7 +29,6 @@ export interface SingeUpUserData {
 }
 
 // Parse interfaces
-
 export interface ParseObject {
   id: string
   get?: (varName: string) => any | any[]
@@ -37,6 +36,7 @@ export interface ParseObject {
   add?: (varName: string, varValue: any) => void
   relation?: (relationName: string) => any
   save?: () => Promise<ParseObject>
+  destroy?: () => Promise<ParseFriendRequest>
   new (): any
   [index: string]: string | number | undefined | ((index?: string, index2?: any) => any)
 }
@@ -51,7 +51,9 @@ export interface ParseGame extends ParseObject {
   getUserColor?: (id: string) => ChessColor
 }
 
-export interface ParseFriendRequest extends ParseObject {}
+export interface ParseFriendRequest extends ParseObject {
+  getFriend: () => false | ParseUser
+}
 
 /**
  * Initalises the Parse connection and adds default Object
@@ -102,7 +104,7 @@ function createParseGameObject() {
 
 function createParseFriendRequestObject(): ParseFriendRequest {
   return Parse.Object.extend("FriendRequests", {
-    getFriend(): false | any {
+    getFriend(): false | ParseUser {
       const current = getCurrentUser()
       const from = this.get("fromUser")
       const to = this.get("toUser")
@@ -380,13 +382,11 @@ export async function answerFriendRequest(
         "status",
         acceptRequest ? FriendRequestStatus.accepted : FriendRequestStatus.rejected
       )
-      // update user
-      const userFriends = currentUser.relation("friends")
-      userFriends.add(friend)
 
       try {
         await friendRequest.save()
-        await currentUser.save()
+        // update user
+        await addFriend(friend)
 
         return true
       } catch (error) {
@@ -406,21 +406,19 @@ export async function answerFriendRequest(
  */
 export async function getFriendRequest(
   toUser: ParseUser,
-  fromUser?: ParseUser
-): Promise<ParseUser[]> {
+  filter?: FriendRequestStatus
+): Promise<ParseFriendRequest[]> {
   const friendRequest = createParseFriendRequestObject()
   const requestObject = new friendRequest()
 
   // query
   const toQuery = new Parse.Query(requestObject)
   toQuery.equalTo("toUser", toUser)
-  toQuery.equalTo("status", FriendRequestStatus.pending)
-  if (!_.isUndefined(fromUser)) toQuery.equalTo("fromUser", fromUser)
+  if (!_.isUndefined(filter)) toQuery.equalTo("status", filter)
 
   const fromQuery = new Parse.Query(requestObject)
   fromQuery.equalTo("fromUser", toUser)
-  fromQuery.equalTo("status", FriendRequestStatus.pending)
-  if (!_.isUndefined(fromUser)) toQuery.equalTo("toUser", fromUser)
+  if (!_.isUndefined(filter)) fromQuery.equalTo("status", filter)
 
   const query = Parse.Query.or(toQuery, fromQuery)
   query.include(["toUser", "fromUser"])
@@ -450,39 +448,69 @@ export async function getFriends(): Promise<false | ParseUser[]> {
   return false
 }
 
-export async function currentFriendRequests(): Promise<false | ParseUser[]> {
-  const current = getCurrentUser()
-  const query = new Parse.Query(Parse.User)
-  const friendQuery = new Parse.Query(Parse.User)
+export async function addFriend(friend: ParseUser): Promise<boolean> {
+  const currentUser = getCurrentUser()
 
-  if (current) {
-    const currentFriends = await getFriends()
+  if (currentUser) {
+    const friendRel = currentUser.relation("friends")
+    friendRel.add(friend)
 
-    if (currentFriends) {
-      // applie filter to Querys
-      friendQuery.equalTo("objectId", current.id)
-      query.matchesQuery("friends", friendQuery)
-      try {
-        let friendRequests = await query.find()
-        // const friendIds = friendRequests.
-        const removedFriends = _.remove(friendRequests, value => {
-          const currUserId = value.id
-          var returnValue = false
-
-          currentFriends.map(friend => {
-            if (friend.id === currUserId) returnValue = true
-            return false
-          })
-
-          return returnValue
-        })
-
-        return friendRequests
-      } catch (error) {
-        console.error("error: ", error)
-        return false
-      }
+    try {
+      await currentUser.save()
+      return true
+    } catch (error) {
+      console.error(error)
+      return false
     }
+  }
+  return false
+}
+
+export async function destroyFriendRequest(request: ParseFriendRequest): Promise<boolean> {
+  try {
+    await request.destroy()
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
+  }
+}
+
+export async function checkFriendRequest(): Promise<boolean> {
+  const currentUser = getCurrentUser()
+  const friends = await getFriends()
+
+  if (currentUser && friends) {
+    const friendRequests = await getFriendRequest(currentUser)
+    const newFriendRequest = friendRequests.filter(request => {
+      const requestFriend = request.getFriend()
+      let add = true
+
+      if (requestFriend) {
+        let id = requestFriend.id
+        friends.map(friend => {
+          if (friend.id === id) add = false
+        })
+      }
+
+      return add
+    })
+
+    // checking all friendrequest for accepts or rejects
+    newFriendRequest.map(async friendRequest => {
+      const status = friendRequest.get("status")
+      const friend = friendRequest.getFriend()
+
+      if (friend) {
+        if (status === FriendRequestStatus.accepted) {
+          await addFriend(friend)
+          await destroyFriendRequest(friendRequest)
+        } else if (status === FriendRequestStatus.rejected)
+          await destroyFriendRequest(friendRequest)
+      }
+    })
+
+    return true
   }
   return false
 }
