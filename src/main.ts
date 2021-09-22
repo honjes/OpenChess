@@ -154,7 +154,7 @@ const app = createApp(App)
 if (process.env.NODE_ENV === "production") {
   Sentry.init({
     app,
-    dsn: "https://b5b860a1767043b9a39ec5e788ccf582@o497145.ingest.sentry.io/5963248",
+    dsn: config.sentry_dns,
     integrations: [
       new Integrations.BrowserTracing({
         routingInstrumentation: Sentry.vueRouterInstrumentation(router),
