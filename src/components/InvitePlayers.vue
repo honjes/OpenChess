@@ -67,6 +67,8 @@ import {
   getFriends,
   getFriendRequest,
   createGameWithCurrent,
+  checkFriendRequest,
+  FriendRequestStatus,
 } from "../util/parse"
 
 export default {
@@ -86,6 +88,7 @@ export default {
   },
   async mounted() {
     await this.updateFriends()
+    await checkFriendRequest()
   },
   methods: {
     async addFriendClickHander(ev) {
@@ -116,9 +119,8 @@ export default {
         const newFriends = await getFriends()
         if (newFriends && newFriends.length > 0) this.friends = newFriends
 
-        const friends_requests = await getFriendRequest(user)
-        // request Friends
-        const friendRequestIds = friends_requests.map(request => request.objectId)
+        const friends_requests = await getFriendRequest(user, FriendRequestStatus.pending)
+        // set friendsequests
         if (friends_requests) this.friendRequests = friends_requests
       }
     },
