@@ -151,7 +151,8 @@ const store = createStore({
 })
 const app = createApp(App)
 
-if (process.env.NODE_ENV === "production") {
+// Sentry init
+if (process.env.NODE_ENV === "production" && config.sentry_dns !== "") {
   Sentry.init({
     app,
     dsn: config.sentry_dns,
