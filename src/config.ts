@@ -12,7 +12,7 @@ interface OCConfig {
   [index: string]: string | number | boolean
 }
 
-const { parse_secret, SENTRY_DSN } = process.env
+const { parse_secret, SENTRY_DSN } = import.meta.env
 
 const config: OCConfig = {
   debug: false, // Disables Accounts and all connections to the server
