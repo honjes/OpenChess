@@ -4,7 +4,13 @@
       <div class="info_header">
         <div class="user_info" v-if="game">
           <div class="user">
-            <Avatar size="70px" :color="user.color" :extends="true" :text="user.username" />
+            <Avatar
+              size="70px"
+              :color="user.color"
+              :extends="true"
+              :extendsLeft="false"
+              :text="user.username"
+            />
             <span
               :class="{
                 'oc-icon-king_white': game.getUserColor(user.id) === 'white',

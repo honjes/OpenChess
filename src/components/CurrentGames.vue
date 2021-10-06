@@ -24,6 +24,7 @@
             size="30px"
             :color="getEnemyColor(game.getEnemy(currentUser.id).id)"
             :extends="true"
+            :extendsLeft="false"
             :text="getEnemyName(game.getEnemy(currentUser.id).id)"
           />
         </span>
